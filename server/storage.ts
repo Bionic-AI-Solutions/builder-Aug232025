@@ -224,17 +224,6 @@ export class MemStorage implements IStorage {
         latency: 28,
         createdAt: new Date(),
       },
-      {
-        id: "server-4",
-        userId: demoUser.id,
-        name: "Payment MCP",
-        type: "http",
-        url: "https://payments.mcpbuilder.com",
-        description: "Payment processing",
-        status: "connected",
-        latency: 55,
-        createdAt: new Date(),
-      },
     ];
 
     servers.forEach(server => this.mcpServers.set(server.id, server));
