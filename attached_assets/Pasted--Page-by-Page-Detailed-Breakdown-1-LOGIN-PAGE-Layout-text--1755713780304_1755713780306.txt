@@ -1,0 +1,1000 @@
+📋 Page-by-Page Detailed Breakdown
+1. LOGIN PAGE
+Layout:
+text
+┌─────────────────────────────────────┐
+│         Gradient Background         │
+│  ┌─────────────────────────────┐   │
+│  │     Login Card (Centered)    │   │
+│  │  ┌─────────────────────────┐ │   │
+│  │  │   MCP Builder Logo      │ │   │
+│  │  │   "Build AI apps"       │ │   │
+│  │  │                         │ │   │
+│  │  │  Email: [____________]  │ │   │
+│  │  │  Pass:  [____________]  │ │   │
+│  │  │                         │ │   │
+│  │  │     [Sign In Button]    │ │   │
+│  │  │                         │ │   │
+│  │  │   Or continue with:     │ │   │
+│  │  │  [Google] [GitHub]      │ │   │
+│  │  └─────────────────────────┘ │   │
+│  └─────────────────────────────────┘   │
+└─────────────────────────────────────────┘
+
+Functionality:
+Authentication: Simple demo login (demo@mcpbuilder.com / demo123)
+Social Login: Google and GitHub buttons (demo purposes)
+Responsive Design: Works on all devices
+Validation: Email and password field validation
+User Flow:
+User enters credentials
+System validates (currently demo validation)
+Redirects to Dashboard on success
+Shows main application interface
+Significance:
+Entry Point: First impression of the platform
+Security Gate: Controls access to application features
+Professional Appearance: Establishes credibility
+2. DASHBOARD PAGE
+Layout:
+text
+┌─ Sidebar ─┬─────────────── Header ───────────────┐
+│ MCP Builder│ Dashboard        [🔔] Sarah Johnson │
+│            │                                     │
+│ 📊Dashboard│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ │
+│ 💬Chat Dev │  │  12  │ │  5   │ │  8   │ │  3   │ │
+│ 📁Projects │  │ Apps │ │Active│ │MCPs  │ │Market│ │
+│ 🔧Servers  │  │      │ │Proj  │ │      │ │Apps  │ │
+│ 🏪Market   │  └──────┘ └──────┘ └──────┘ └──────┘ │
+│ 📈Analytics│                                     │
+│ 💳Billing  │         Recent Projects             │
+│ ⚙️Admin    │  ┌─────────────┐ ┌─────────────┐   │
+│            │  │ Restaurant  │ │ Customer    │   │
+│            │  │ App         │ │ Support     │   │
+│            │  │ ✅Completed │ │ 🔄Testing   │   │
+│            │  └─────────────┘ └─────────────┘   │
+└────────────┴─────────────────────────────────────┘
+
+Functionality:
+Metric Cards:
+Generated Apps: Total number of applications created
+Active Projects: Projects in development/testing
+MCP Connections: Number of connected servers
+Marketplace Apps: Apps deployed to marketplace
+Recent Projects:
+Project Cards: Visual representation of latest 3 projects
+Status Indicators: Completed, Testing, Development badges
+Quick Access: Click to view project details
+Progress Tracking: Visual progress indicators
+Data Sources:
+Real-time metrics from appData.projects
+Connection status from appData.mcpServers
+Marketplace count from appData.marketplaceApps
+User Flow:
+User logs in → Lands on Dashboard
+Sees overview of their platform activity
+Quick access to recent projects
+Navigation to other platform areas
+Significance:
+Central Hub: Overview of all user activity
+Quick Insights: Immediate understanding of platform usage
+Navigation Starting Point: Gateway to all other features
+Progress Tracking: Visual representation of productivity
+3. CHAT DEVELOPMENT PAGE ⭐ CORE FEATURE
+Layout:
+text
+┌─ Sidebar ─┬─── Chat Development ─────┬─ Right Panel ─┐
+│           │                          │               │
+│           │    Chat Messages         │   Projects    │
+│           │ ┌──────────────────────┐ │ ┌───────────┐ │
+│           │ │ User: I want a       │ │ │Restaurant │ │
+│           │ │ restaurant app       │ │ │Customer   │ │
+│           │ │                      │ │ │Support    │ │
+│           │ │ AI: I'll help you... │ │ │Tour Guide │ │
+│           │ │ Features:            │ │ └───────────┘ │
+│           │ │ • Menu management    │ │               │
+│           │ │ • Order processing   │ │     LLM       │
+│           │ │ • Staff dashboard    │ │ ○ Claude 3.7  │
+│           │ └──────────────────────┘ │ ○ Gemini Pro  │
+│           │                          │ ● LLaMA 3.3   │
+│           │ [Input] [Transfer] [Send]│ ○ GPT-4       │
+│           │                          │               │
+│           │      Prompt Section      │  MCP Servers  │
+│           │ ┌──────────────────────┐ │ ☑ Database    │
+│           │ │ Create a restaurant  │ │ ☑ API Gateway │
+│           │ │ app that manages...  │ │ ☐ Auth        │
+│           │ │ [Editable Text]      │ │ ☑ Payment     │
+│           │ └──────────────────────┘ │ ☐ Email       │
+│           │                          │               │
+│           │                          │  [Save App]   │
+└───────────┴──────────────────────────┴───────────────┘
+
+Detailed Functionality:
+Chat Area:
+AI Conversation: Interactive chat with AI to develop app concepts
+Message History: Persistent conversation log
+Smart Responses: AI provides structured app recommendations
+Real-time: Immediate AI responses with typing indicators
+Transfer System:
+"Transfer left ready prompt" Button: Orange button to move AI response
+Automatic Population: Fills prompt section with AI-generated content
+Editable Content: User can modify transferred prompt
+Validation: Ensures prompt exists before transfer
+Prompt Section:
+Large Text Area: 120px height, expandable
+Rich Editing: Full text editing capabilities
+Auto-save: Maintains content during session
+Character Limit: Reasonable limits for API calls
+Right Panel - Projects:
+Project List: All user-generated apps
+Selection: Click to select project for chat
+Status Indicators: Visual status badges
+Scrollable: Handles many projects efficiently
+Right Panel - LLM Selection:
+Radio Buttons: Single selection only
+Model Options: Claude 3.7, Gemini Pro, LLaMA 3.3, GPT-4
+Visual Feedback: Clear selection indicators
+Model Info: Descriptions of each model's strengths
+Right Panel - MCP Servers:
+Checkboxes: Multiple selection allowed
+Server List: All available MCP connections
+Status Indicators: Connection status and latency
+Validation: Ensures at least one server selected
+Save App Button:
+Validation: Checks prompt, LLM, and servers
+Generation Process: Creates new project
+Feedback: Success notifications
+Auto-clear: Resets form after successful generation
+User Flow:
+Start Conversation: Type request in chat input
+AI Interaction: Receive detailed app recommendations
+Transfer Prompt: Click orange button to move AI response
+Edit Prompt: Modify transferred content as needed
+Select LLM: Choose one AI model for generation
+Select Servers: Check required MCP servers
+Generate App: Click Save App to create project
+View Results: App appears in projects list
+Technical Implementation:
+javascript
+// Key Functions:
+- sendMessage() → AI conversation
+- transferPrompt() → Move AI response to prompt area
+- generateApp() → Create new project
+- renderProjectsList() → Update projects display
+- renderServerOptions() → Show available servers
+
+Data Flow:
+text
+User Input → AI Processing → Response Display → 
+Transfer → Prompt Edit → LLM Selection → 
+Server Selection → App Generation → Project Creation
+
+Significance:
+Primary Feature: Core value proposition of the platform
+AI Integration: Demonstrates AI-powered development
+User Experience: Intuitive workflow from idea to app
+Productivity: Rapid application prototyping
+4. PROJECTS PAGE
+Layout:
+text
+┌─────────────── Projects ───────────────┐
+│ Projects    Total: 3  Completed: 1     │
+│             In Dev: 2                  │
+│                                        │
+│ ┌─────────────┐ ┌─────────────┐       │
+│ │Restaurant   │ │Customer     │       │
+│ │App          │ │Support      │       │
+│ │✅Completed  │ │🔄Testing    │       │
+│ │Generated:   │ │Generated:   │       │
+│ │2024-12-18   │ │2024-12-17   │       │
+│ │LLM: CLAUDE  │ │LLM: GEMINI  │       │
+│ │             │ │             │       │
+│ │[View][Chat] │ │[View][Chat] │       │
+│ └─────────────┘ └─────────────┘       │
+│                                        │
+│ ┌─────────────┐                       │
+│ │Tour Guide   │                       │
+│ │🔄Development│                       │
+│ │Generated:   │                       │
+│ │2024-12-16   │                       │
+│ │LLM: LLAMA   │                       │
+│ │             │                       │
+│ │[View][Chat] │                       │
+│ └─────────────┘                       │
+└────────────────────────────────────────┘
+
+Functionality:
+Project Statistics:
+Total Projects: Count of all generated applications
+Completed: Fully functional applications
+In Development: Apps still being refined
+Real-time Updates: Automatically updates when new apps created
+Project Cards:
+App Information: Name, status, generation date, LLM used
+Visual Status: Color-coded badges for different states
+Action Buttons: View Details and Chat with App
+Responsive Grid: Adapts to screen size
+Project Details Modal:
+text
+┌────── Restaurant App Details ──────┐
+│ Status: ✅ Completed               │
+│ Progress: 100%                     │
+│ LLM Used: CLAUDE                   │
+│ Generated: 2024-12-18              │
+│ MCP Servers: database, api, payment│
+│ Marketplace: Not Deployed          │
+│                                    │
+│ Project Files:                     │
+│ 📄 menu.json (2.4kb)              │
+│ 📄 orders.js (8.1kb)              │
+│ 📄 styles.css (3.2kb)             │
+│ 📄 admin.html (5.7kb)             │
+│                                    │
+│ Original Prompt:                   │
+│ [Full prompt text displayed]       │
+│                                    │
+│ [Close][Deploy][Chat with App]     │
+└────────────────────────────────────┘
+
+File Management:
+File List: All attached files during generation
+File Types: HTML, JavaScript, CSS, JSON, etc.
+File Sizes: Realistic file size indicators
+File Categories: Organized by type with icons
+User Flow:
+View All Projects: Grid layout of all applications
+Click Project: Opens detailed modal
+View Files: See all project files and details
+Deploy Option: Move completed apps to marketplace
+Chat Option: Interact with generated application
+Significance:
+Project Management: Central location for all applications
+Progress Tracking: Visual status of all projects
+File Organization: Clear view of project structure
+Deployment Gateway: Path to marketplace publication
+5. MCP SERVERS PAGE
+Layout:
+text
+┌─────────── MCP Servers ──────────────┐
+│ MCP Servers           [Add New Server]│
+│                                       │
+│ ┌─────────────┐ ┌─────────────┐      │
+│ │Database MCP │ │API Gateway  │      │
+│ │🟢Connected  │ │🟢Connected  │      │
+│ │45ms        │ │32ms         │      │
+│ │SSE Events   │ │SSE Events   │      │
+│ │Real-time DB │ │REST & GraphQL│     │
+│ │connections  │ │integrations │      │
+│ │             │ │             │      │
+│ │[Disconnect] │ │[Disconnect] │      │
+│ │[Refresh]    │ │[Refresh]    │      │
+│ │[Configure]  │ │[Configure]  │      │
+│ │[Delete]     │ │[Delete]     │      │
+│ └─────────────┘ └─────────────┘      │
+│                                       │
+│ ┌─────────────┐ ┌─────────────┐      │
+│ │Auth MCP     │ │Payment MCP  │      │
+│ │🟢Connected  │ │🟢Connected  │      │
+│ │28ms        │ │55ms         │      │
+│ │Stdio        │ │HTTP         │      │
+│ │User auth &  │ │Payment      │      │
+│ │authorization│ │processing   │      │
+│ │             │ │             │      │
+│ │[Disconnect] │ │[Disconnect] │      │
+│ │[Refresh]    │ │[Refresh]    │      │
+│ │[Configure]  │ │[Configure]  │      │
+│ │[Delete]     │ │[Delete]     │      │
+│ └─────────────┘ └─────────────┘      │
+└───────────────────────────────────────┘
+
+Server Configuration Modal:
+text
+┌───── Configure MCP Server ─────┐
+│ Server Name: [Database MCP]    │
+│ Server Type: [SSE ▼]           │
+│              ├ SSE (Default)   │
+│              ├ Stdio           │
+│              ├ HTTP            │
+│              ├ WebSocket       │
+│              └ gRPC            │
+│ URL/Command: [wss://...]       │
+│ Description: [Real-time...]    │
+│                                │
+│ [Cancel]        [Save Server]  │
+└────────────────────────────────┘
+
+Functionality:
+Server Management:
+Add New Server: Modal form for server configuration
+Configure Existing: Edit server settings with pre-populated data
+Connection Control: Connect/Disconnect with real-time status
+Status Monitoring: Live latency and connection status
+Delete Servers: Remove unused connections
+Server Types (Updated):
+SSE (Server-Sent Events): Default - Real-time streaming
+Stdio: Standard input/output communication
+HTTP: Traditional REST API connections
+WebSocket: Bidirectional real-time communication
+gRPC: High-performance RPC framework
+Real-time Features:
+Status Indicators: Green (connected), Red (disconnected)
+Latency Monitoring: Live response time tracking
+Connection Testing: Refresh to test connectivity
+Auto-updates: Status changes reflect immediately
+User Flow:
+View Servers: See all configured MCP connections
+Add Server: Click Add New Server → Fill form → Save
+Configure: Click Configure → Edit settings → Save
+Monitor: Check connection status and latency
+Manage: Connect/disconnect, refresh, or delete servers
+Technical Implementation:
+javascript
+// Server Management Functions:
+- renderServers() → Display server grid
+- openServerModal() → Show configuration form
+- saveServer() → Create/update server
+- toggleServerConnection() → Connect/disconnect
+- refreshServer() → Update status
+- deleteServer() → Remove server
+
+Significance:
+Infrastructure Management: Core platform connectivity
+Service Integration: Connect external services and APIs
+Real-time Monitoring: Ensure reliable connections
+Scalability: Add new services as needed
+6. MARKETPLACE PAGE
+Layout:
+text
+┌──────────── Marketplace ────────────┐
+│ Marketplace      [Search: _______] │
+│ [All][Business][Content][Service]   │
+│                                     │
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐│
+│ │⚡       │ │📊       │ │💬       ││
+│ │E-comm   │ │Blog     │ │Booking  ││
+│ │Store    │ │Platform │ │System   ││
+│ │$49 ⭐4.8│ │$29 ⭐4.6│ │$39 ⭐4.9││
+│ │1.2K DL  │ │890 DL   │ │2.1K DL  ││
+│ │         │ │         │ │         ││
+│ │[Install]│ │[Install]│ │[Install]││
+│ │[Details]│ │[Details]│ │[Details]││
+│ └─────────┘ └─────────┘ └─────────┘│
+│                                     │
+│ ┌─────────┐ ┌─────────┐ ┌─────────┐│
+│ │🍕       │ │🎫       │ │📍       ││
+│ │Restaurant│ │Support  │ │Tour     ││
+│ │App      │ │System   │ │Guide    ││
+│ │$35 ⭐4.7│ │$42 ⭐4.9│ │$28 ⭐4.5││
+│ │Custom   │ │Custom   │ │Custom   ││
+│ │         │ │         │ │         ││
+│ │[Install]│ │[Install]│ │[Install]││
+│ │[Details]│ │[Details]│ │[Details]││
+│ └─────────┘ └─────────┘ └─────────┘│
+└─────────────────────────────────────┘
+
+Functionality:
+App Discovery:
+Search Bar: Find specific applications
+Category Filters: Business, Content, Service, Custom
+Featured Apps: Highlighted popular applications
+User-generated: Apps deployed from projects
+App Information:
+Visual Icons: Category-based emoji indicators
+Pricing: Cost of each application
+Ratings: Star ratings and numerical scores
+Downloads: Number of installations
+Categories: Business classification
+Deployment Integration:
+User Apps: Projects deployed from individual accounts
+Custom Category: User-generated applications
+Automatic Pricing: Generated pricing for user apps
+Real-time Updates: New deployments appear immediately
+User Flow:
+Browse Apps: View available applications
+Filter/Search: Find specific types of apps
+View Details: Click for more information
+Install Apps: Download and use applications
+Deploy Own: Move projects from personal collection
+Significance:
+Revenue Stream: Monetization through app sales
+Community: Sharing user-generated applications
+Discovery: Find solutions built by others
+Validation: Market feedback on generated apps
+7. ANALYTICS PAGE
+Layout:
+text
+┌─────────── Analytics Dashboard ──────────┐
+│                                          │
+│ ┌─────────────┐ ┌─────────────┐         │
+│ │ App Usage   │ │Performance  │         │
+│ │             │ │Metrics      │         │
+│ │📊 Usage     │ │📈 Performance│        │
+│ │trends would │ │data would   │         │
+│ │go here      │ │go here      │         │
+│ │             │ │             │         │
+│ └─────────────┘ └─────────────┘         │
+│                                          │
+│ ┌─────────────┐ ┌─────────────┐         │
+│ │Server Health│ │User         │         │
+│ │             │ │Engagement   │         │
+│ │⚡ Server    │ │👥 Engagement│         │
+│ │metrics would│ │stats would  │         │
+│ │go here      │ │go here      │         │
+│ │             │ │             │         │
+│ └─────────────┘ └─────────────┘         │
+└──────────────────────────────────────────┘
+
+Functionality:
+App Usage Tracking: Monitor application utilization
+Performance Metrics: Server and app performance data
+Server Health: MCP server status and reliability
+User Engagement: Platform usage statistics
+Visual Charts: Data visualization placeholders
+Significance:
+Performance Monitoring: Track platform efficiency
+Usage Insights: Understand user behavior
+Optimization: Identify improvement areas
+Reporting: Data-driven decision making
+8. BILLING PAGE
+Layout:
+text
+┌─────────── Billing & Subscription ───────┐
+│                                           │
+│ ┌─── Current Plan ───┐ ┌─── Usage ─────┐ │
+│ │ Professional       │ │ Current Usage │ │
+│ │ $79/month          │ │               │ │
+│ │ Billed monthly     │ │ Projects:     │ │
+│ │                    │ │ 3/25 ████░░░  │ │
+│ │ [Change Plan]      │ │               │ │
+│ │                    │ │ MCP Conns:    │ │
+│ │                    │ │ 5/∞  █░░░░░░  │ │
+│ │                    │ │               │ │
+│ │                    │ │ API Calls:    │ │
+│ │                    │ │ 1.2K/10K ██░░ │ │
+│ └────────────────────┘ └───────────────┘ │
+└───────────────────────────────────────────┘
+
+Functionality:
+Subscription Management: Current plan details
+Usage Tracking: Monitor resource consumption
+Billing History: Payment records
+Plan Changes: Upgrade/downgrade options
+Usage Limits: Visual progress bars
+Significance:
+Financial Management: Subscription control
+Resource Monitoring: Track platform usage
+Cost Control: Manage expenses
+Scalability: Plan for growth
+9. ADMIN PAGE
+Layout:
+text
+┌───────────── Admin Panel ────────────────┐
+│                                          │
+│ ┌─── Platform Stats ──┐ ┌─System Health─┐│
+│ │ 127 Total Users     │ │ Server Uptime ││
+│ │ 89 Active Projects  │ │ 99.9% 🟢     ││
+│ │ $12,450 Revenue     │ │              ││
+│ │                     │ │ Active Conns ││
+│ │                     │ │ 245          ││
+│ │                     │ │              ││
+│ │                     │ │ Pending Rev  ││
+│ │                     │ │ 3 ⚠️        ││
+│ └─────────────────────┘ └──────────────┘│
+└──────────────────────────────────────────┘
+
+Functionality:
+Platform Statistics: User and revenue metrics
+System Health: Infrastructure monitoring
+User Management: Account oversight
+Content Moderation: Review submitted apps
+System Maintenance: Platform administration
+Significance:
+Platform Management: Administrative control
+Health Monitoring: System reliability
+Business Intelligence: Growth metrics
+Quality Control: Content oversight
+🔄 Complete User Flow & Journey
+Onboarding Flow:
+text
+Login → Dashboard → Chat Development → Create First App → 
+Deploy to Marketplace → Manage Projects → Scale Usage
+
+App Creation Flow:
+text
+1. Chat Development Page
+   ↓
+2. Chat with AI about app idea
+   ↓
+3. AI provides structured recommendations
+   ↓
+4. Transfer AI response to prompt section
+   ↓
+5. Edit prompt as needed
+   ↓
+6. Select LLM (single choice)
+   ↓
+7. Select MCP servers (multiple choice)
+   ↓
+8. Click Save App
+   ↓
+9. App generated and added to projects
+   ↓
+10. Test app through chat interface
+    ↓
+11. Deploy to marketplace when ready
+
+Project Management Flow:
+text
+Projects Page → View Details → Chat with App → 
+Iterate/Improve → Deploy to Marketplace → Monitor Analytics
+
+🎯 Key Platform Differentiators
+Individual-Focused:
+No team management complexity
+Personal project ownership
+Solo workflow optimization
+Individual productivity focus
+AI-Powered Generation:
+Conversational app development
+Intelligent prompt generation
+Multiple LLM options
+Smart recommendations
+MCP Integration:
+Multiple server connections
+Real-time service integration
+Flexible architecture
+Scalable connections
+Chat-to-App Innovation:
+Talk to generated applications
+Test functionality through conversation
+Immediate feedback loop
+Interactive validation
+Marketplace Ecosystem:
+Deploy personal projects
+Monetize applications
+Discover community apps
+Revenue generation
+📊 Technical Architecture
+Frontend Structure:
+text
+Login System → Main App Layout → 
+├── Navigation (Sidebar)
+├── Header (User Info)
+├── Page Content (Dynamic)
+│   ├── Dashboard
+│   ├── Chat Development ⭐
+│   ├── Projects
+│   ├── MCP Servers
+│   ├── Marketplace
+│   ├── Analytics
+│   ├── Billing
+│   └── Admin
+└── Modals (Overlays)
+    ├── Project Details
+    ├── App Chat
+    └── Server Configuration
+
+Data Flow:
+text
+User Input → AI Processing → App Generation → 
+Project Storage → Chat Interface → Marketplace Deployment
+
+State Management:
+javascript
+appData = {
+  currentUser: {...},
+  projects: [...],
+  mcpServers: [...],
+  chatMessages: [...],
+  marketplaceApps: [...]
+}
+
+This comprehensive platform represents a new paradigm in application development, combining AI assistance, conversational interfaces, and marketplace distribution in a unified, individual-focused workflow.
+
+
+updated chat devlopment window
+
+3. CHAT DEVELOPMENT PAGE ⭐ CORE FEATURE
+Corrected Layout Based on Your Screenshot:
+text
+┌─ Sidebar ─┬─────────── Chat Development ────────────────────────────────────┬─ Live Preview ─┐
+│ MCP Builder│                                                                 │                │
+│            │  ┌─────────────────────────────────────────────────────────┐   │   Live Preview │
+│ 📊Dashboard│  │                Chat Conversation Area                    │   │                │
+│ 💬Chat Dev │  │                                                         │   │  🚀 Generating │
+│ 📁Projects │  │ User: I'll help you create a comprehensive user         │   │  Building your │
+│ 🔧Servers  │  │ analytics dashboard. Let me understand your requirements:│   │  application...│
+│ 🏪Market   │  │                                                         │   │                │
+│ 📈Analytics│  │ AI: What specific metrics do you want to track?        │   │  Build Progress│
+│ 💳Billing  │  │ • Real-time engagement metrics and revenue tracking     │   │ ✅ Project Setup│
+│ ⚙️Admin    │  │ • User activity, engagement rates, revenue viz         │   │ ✅ Database    │
+│            │  │ • Conversion analysis                                   │   │ 🔄 UI Components│
+│            │  │                                                         │   │ ⏳ Authentication│
+│            │  │ Shall I start building the dashboard structure?         │   │ ⏳ Deployment   │
+│            │  │                                                         │   │                │
+│            │  └─────────────────────────────────────────────────────────┘   │                │
+│            │                                                                 │                │
+│            │  [Ask AI to generate a persona prompt for your agent] [Transfer left ready prompt] [🎤] [GPT-4o ▼] [📎] [Send] │
+│            │                                                                 │                │
+│            │  ┌─── App Name ────┐    ┌─── Knowledge Attachments ───┐       │                │
+│            │  │ [Prompt_____]   │    │ [Browse Files]              │       │                │
+│            │  └─────────────────┘    └─────────────────────────────┘       │                │
+│            │                                                                 │                │
+│            │  ┌─────────────────────────────────────────────────────────┐   │ This is the last│
+│            │  │ Lorem ipsum dolor sit amet, consectetur adipiscing elit, │   │ line of the App │
+│            │  │ sed do eiusmod tempor incididunt ut labore et dolore    │   │ selected from   │
+│            │  │ magna aliqua...                                         │   │ above list      │
+│            │  └─────────────────────────────────────────────────────────┘   │                │
+│            │                                                                 │                │
+│            │  ┌─ LLM ─────────┐    ┌─── MCP Servers ────────┐              │                │
+│            │  │ ○ Claude 3.7  │    │ Item 1                 │              │                │
+│            │  │ ○ Gemini Pro  │    │ Item 2                 │              │ [Multi Select] │
+│            │  │ ● LLaMA 3.3   │    │ Item 3                 │              │                │
+│            │  └───────────────┘    └────────────────────────┘              │                │
+│            │                                                                 │                │
+│            │                           [Save App]                           │                │
+└────────────┴─────────────────────────────────────────────────────────────────┴────────────────┘
+
+Detailed Layout Breakdown:
+Three-Panel Structure:
+LEFT PANEL - Navigation Sidebar (20% width):
+Standard MCP Builder navigation menu
+Chat Development highlighted as active page
+Same as existing sidebar
+CENTER PANEL - Main Chat Development Area (60% width):
+1. Chat Conversation Area (Top Section):
+text
+┌─────────────────────────────────────────────┐
+│           Chat Messages Display              │
+│                                             │
+│ User: "I want to create a dashboard..."     │
+│                                             │
+│ AI: "I'll help you create a comprehensive   │
+│ user analytics dashboard. What specific     │
+│ metrics do you want to track?"              │
+│ • Real-time engagement metrics             │
+│ • Revenue tracking and visualization       │
+│ • User activity monitoring                 │
+│ • Conversion analysis                      │
+│                                             │
+│ "Shall I start building the dashboard       │
+│ structure?"                                 │
+└─────────────────────────────────────────────┘
+
+2. Chat Input Bar (Below Chat Area):
+text
+[Ask AI to generate a persona prompt for your agent] [Transfer left ready prompt] [🎤] [GPT-4o ▼] [📎] [Send]
+
+Large text input field
+"Transfer left ready prompt" button (orange)
+Voice input button
+AI model selector dropdown
+File attachment button
+Send button
+3. App Configuration Section (Below Input):
+App Name & Knowledge Attachments:
+text
+┌─ App Name ──────┐    ┌─ Knowledge Attachments ──┐
+│ [Prompt______]  │    │ [Browse Files]           │
+└─────────────────┘    └──────────────────────────┘
+
+Large Prompt Text Area:
+text
+┌─────────────────────────────────────────────────────┐
+│ Lorem ipsum dolor sit amet, consectetur adipiscing  │
+│ elit, sed do eiusmod tempor incididunt ut labore   │
+│ et dolore magna aliqua. Ut enim ad minim veniam,   │
+│ quis nostrud exercitation ullamco laboris nisi ut  │
+│ aliquip ex ea commodo consequat...                 │
+└─────────────────────────────────────────────────────┘
+
+Selection Areas:
+text
+┌─ LLM Selection ─────┐    ┌─ MCP Servers ──────────┐
+│ ○ Claude 3.7        │    │ Item 1                 │
+│ ○ Gemini Pro        │    │ Item 2                 │
+│ ● LLaMA 3.3         │    │ Item 3                 │
+│ ○ GPT-4             │    │ (Multi-select list)    │
+└─────────────────────┘    └────────────────────────┘
+
+4. Save App Button (Bottom):
+text
+                    [Save App]
+
+Centered, prominent button
+Primary blue/teal color
+RIGHT PANEL - Live Preview (20% width):
+text
+┌─── Live Preview ───────┐
+│                        │
+│    🚀 Building your    │
+│    application...      │
+│                        │
+│    Processing your     │
+│    request             │
+│                        │
+│  ┌─ Build Progress ──┐ │
+│  │ ✅ Project Setup  │ │
+│  │ ✅ Database       │ │
+│  │ 🔄 UI Components  │ │
+│  │ ⏳ Authentication │ │
+│  │ ⏳ Deployment     │ │
+│  └───────────────────┘ │
+│                        │
+│                        │
+│  "This is the last     │
+│  line of the App       │
+│  selected from         │
+│  above list"           │
+│                        │
+│      [Multi Select]    │
+│                        │
+└────────────────────────┘
+
+Key Functional Elements:
+1. Chat Conversation Flow:
+Natural conversation with AI about application requirements
+Structured AI responses with bullet points and recommendations
+Follow-up questions from AI to refine requirements
+Persistent chat history throughout session
+2. Transfer Mechanism:
+"Transfer left ready prompt" button (orange) moves AI response to prompt area
+Automatic population of the large text area below
+Editable prompt - user can modify transferred content
+Visual feedback when transfer occurs
+3. App Configuration:
+App Name field for custom naming
+Knowledge Attachments - file upload for context
+Large prompt area - main application description
+Single LLM selection - radio buttons for model choice
+Multiple MCP server selection - checkbox list
+4. Live Preview Panel:
+Real-time generation status - shows build progress
+Build progress indicators - checkmarks, loading, pending states
+Preview content - shows app being built
+Visual feedback - keeps user engaged during generation
+Complete User Workflow:
+text
+1. Start Conversation
+   ↓ User types: "I want to create a restaurant app"
+   
+2. AI Provides Structure
+   ↓ AI responds with detailed features and requirements
+   
+3. Refine Requirements  
+   ↓ Back and forth conversation to clarify needs
+   
+4. Transfer Final Prompt
+   ↓ Click orange "Transfer left ready prompt" button
+   
+5. Customize Configuration
+   ↓ Edit prompt, add app name, attach files
+   
+6. Select Technical Stack
+   ↓ Choose LLM (single) and MCP servers (multiple)
+   
+7. Generate Application
+   ↓ Click "Save App" - Live Preview shows progress
+   
+8. App Complete
+   ↓ New project appears in projects list
+
+Technical Implementation Details:
+HTML Structure:
+xml
+<div class="chat-development-layout">
+  <!-- Main Center Panel -->
+  <div class="chat-main-panel">
+    <!-- Chat Messages Area -->
+    <div class="chat-messages-container">
+      <div id="chatMessages" class="chat-messages"></div>
+    </div>
+    
+    <!-- Chat Input Bar -->
+    <div class="chat-input-bar">
+      <input type="text" placeholder="Ask AI to generate a persona prompt for your agent">
+      <button class="transfer-btn">Transfer left ready prompt</button>
+      <button class="voice-btn">🎤</button>
+      <select class="model-select">
+        <option>GPT-4o</option>
+      </select>
+      <button class="file-btn">📎</button>
+      <button class="send-btn">Send</button>
+    </div>
+    
+    <!-- App Configuration -->
+    <div class="app-config-section">
+      <div class="config-row">
+        <div class="app-name-field">
+          <label>App Name</label>
+          <input type="text" placeholder="Prompt">
+        </div>
+        <div class="knowledge-attachments">
+          <label>Knowledge Attachments</label>
+          <button>Browse Files</button>
+        </div>
+      </div>
+      
+      <div class="prompt-area">
+        <textarea id="mainPrompt" placeholder="Lorem ipsum dolor sit amet..."></textarea>
+      </div>
+      
+      <div class="selection-row">
+        <div class="llm-selection">
+          <h3>LLM</h3>
+          <label><input type="radio" name="llm" value="claude"> Claude 3.7</label>
+          <label><input type="radio" name="llm" value="gemini"> Gemini Pro</label>
+          <label><input type="radio" name="llm" value="llama" checked> LLaMA 3.3</label>
+          <label><input type="radio" name="llm" value="gpt4"> GPT-4</label>
+        </div>
+        
+        <div class="mcp-servers">
+          <h3>MCP Servers</h3>
+          <label><input type="checkbox" value="item1"> Item 1</label>
+          <label><input type="checkbox" value="item2"> Item 2</label>
+          <label><input type="checkbox" value="item3"> Item 3</label>
+        </div>
+      </div>
+      
+      <div class="save-section">
+        <button class="save-app-btn">Save App</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Right Panel - Live Preview -->
+  <div class="live-preview-panel">
+    <h3>Live Preview</h3>
+    <div class="preview-content">
+      <div class="building-status">
+        <div class="icon">🚀</div>
+        <p>Building your application...</p>
+        <p class="subtitle">Processing your request</p>
+      </div>
+      
+      <div class="build-progress">
+        <h4>Build Progress</h4>
+        <div class="progress-item completed">✅ Project Setup</div>
+        <div class="progress-item completed">✅ Database</div>
+        <div class="progress-item active">🔄 UI Components</div>
+        <div class="progress-item pending">⏳ Authentication</div>
+        <div class="progress-item pending">⏳ Deployment</div>
+      </div>
+      
+      <div class="preview-note">
+        <p>This is the last line of the App selected from above list</p>
+      </div>
+      
+      <button class="multi-select-btn">Multi Select</button>
+    </div>
+  </div>
+</div>
+
+CSS Layout:
+css
+.chat-development-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  height: 100vh;
+  gap: 1rem;
+}
+
+.chat-main-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-messages-container {
+  flex: 1;
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  overflow-y: auto;
+}
+
+.chat-input-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.chat-input-bar input[type="text"] {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.transfer-btn {
+  background: #ff6b35;
+  color: white;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.app-config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.config-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.prompt-area textarea {
+  width: 100%;
+  height: 120px;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.selection-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.save-app-btn {
+  width: 100%;
+  padding: 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.live-preview-panel {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.building-status {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.build-progress {
+  margin: 1rem 0;
+}
+
+.progress-item {
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  border-radius: 6px;
+}
+
+.progress-item.completed {
+  background: rgba(34, 197, 94, 0.1);
+  color: #059669;
+}
+
+.progress-item.active {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.progress-item.pending {
+  background: rgba(156, 163, 175, 0.1);
+  color: #6b7280;
+}
+
+This layout now exactly matches your screenshot with the proper three-panel structure, correct positioning of all elements, and the specific workflow you outlined in your requirements.
+
+just that the live preview window should be on the right side 
+now you already created the webapp just make changes into that 

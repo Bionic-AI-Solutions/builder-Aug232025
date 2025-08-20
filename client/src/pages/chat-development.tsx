@@ -8,6 +8,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +28,9 @@ import {
   Rocket,
   CheckCircle,
   Clock,
-  Loader2
+  Loader2,
+  Monitor,
+  MessageSquare
 } from "lucide-react";
 
 export default function ChatDevelopment() {
@@ -36,6 +45,9 @@ export default function ChatDevelopment() {
   const [selectedLLM, setSelectedLLM] = useState("llama");
   const [selectedServers, setSelectedServers] = useState<string[]>(["database", "api"]);
   const [buildProgress, setBuildProgress] = useState<"idle" | "building" | "completed">("idle");
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [appChatInput, setAppChatInput] = useState("");
+  const [appChatMessages, setAppChatMessages] = useState<{id: string, sender: string, message: string}[]>([]);
 
   // Fetch data
   const { data: messages = [] } = useQuery<ChatMessage[]>({
@@ -174,6 +186,71 @@ export default function ChatDevelopment() {
         ? prev.filter(id => id !== serverId)
         : [...prev, serverId]
     );
+  };
+
+  const getAppTypeResponses = (appType: string, question: string): string => {
+    const responses: Record<string, Record<string, string>> = {
+      "Restaurant App": {
+        "what is today's menu": "Today's menu includes our signature dishes:\n\n🍝 Pasta Primavera - $18\n🥗 Caesar Salad - $12\n🍖 Grilled Ribeye - $32\n🍤 Garlic Shrimp - $24\n🍰 Tiramisu - $8\n\nWould you like to place an order or make a reservation?",
+        "menu": "Here's our full menu:\n\n**APPETIZERS**\n• Bruschetta - $9\n• Calamari - $12\n\n**MAINS**\n• Pasta Primavera - $18\n• Grilled Salmon - $28\n• Ribeye Steak - $32\n\n**DESSERTS**\n• Tiramisu - $8\n• Gelato - $6",
+        "reservation": "I'd be happy to help with reservations! We have availability today from 6-9 PM. How many guests and what time would you prefer?",
+        "default": "Welcome to our restaurant! I can help you with our menu, reservations, or placing an order. What would you like to know?"
+      },
+      "E-commerce Store": {
+        "products": "Here are our featured products:\n\n📱 iPhone 15 Pro - $999\n💻 MacBook Air - $1299\n⌚ Apple Watch - $399\n🎧 AirPods Pro - $249\n\nAll items come with free shipping and 30-day returns!",
+        "order": "To place an order, simply add items to your cart and proceed to checkout. We accept all major credit cards and PayPal.",
+        "shipping": "We offer free shipping on orders over $50. Standard delivery is 3-5 business days, or choose express delivery for next-day delivery.",
+        "default": "Welcome to our store! Browse our products, check your orders, or ask me about shipping and returns. How can I help you today?"
+      },
+      "Blog Platform": {
+        "posts": "Here are our latest blog posts:\n\n✍️ 'Getting Started with React' - Dec 18\n🚀 'Web Performance Tips' - Dec 17\n💡 'Design Trends 2025' - Dec 16\n🔧 'JavaScript Best Practices' - Dec 15\n\nWhich topic interests you most?",
+        "write": "Ready to create a new post? I can help you with:\n• Post ideas and topics\n• SEO optimization\n• Content structure\n• Publishing schedule\n\nWhat would you like to write about?",
+        "default": "Welcome to our blog platform! I can help you discover content, create new posts, or manage your publications. What are you looking for?"
+      },
+      "Fitness Tracker": {
+        "workout": "Here's today's recommended workout:\n\n💪 **Upper Body Strength**\n• Push-ups: 3 sets of 12\n• Dumbbell rows: 3 sets of 10\n• Shoulder press: 3 sets of 8\n• Plank: 3 sets of 30s\n\nEstimated time: 45 minutes. Ready to start?",
+        "progress": "Your fitness progress this week:\n\n📊 Workouts completed: 4/5\n🔥 Calories burned: 1,240\n⏱️ Total workout time: 3h 20m\n💪 Strength improved by 5%\n\nKeep up the great work!",
+        "default": "Hi there! I'm your fitness assistant. I can help you track workouts, monitor progress, plan exercises, and stay motivated. What's your fitness goal today?"
+      },
+      "Task Manager": {
+        "tasks": "Here are your current tasks:\n\n✅ **Completed:**\n• Review project proposal\n• Team standup meeting\n\n📋 **In Progress:**\n• Update documentation\n• Code review for feature X\n\n⏰ **Pending:**\n• Schedule client call\n• Prepare presentation",
+        "project": "Your active projects:\n\n🚀 **Website Redesign** (75% complete)\n👥 **Team Onboarding** (40% complete)\n📱 **Mobile App** (90% complete)\n\nWhich project would you like to focus on?",
+        "default": "Welcome to your task manager! I can help you organize tasks, track project progress, collaborate with your team, and meet deadlines. What do you need to accomplish today?"
+      }
+    };
+
+    const appResponses = responses[appType] || {};
+    const questionLower = question.toLowerCase();
+    
+    for (const [key, response] of Object.entries(appResponses)) {
+      if (questionLower.includes(key)) {
+        return response;
+      }
+    }
+    
+    return appResponses.default || "I'm here to help! What would you like to know about this app?";
+  };
+
+  const handleAppChatSend = () => {
+    if (!appChatInput.trim() || !selectedProject) return;
+    
+    const selectedProjectData = projects.find(p => p.id === selectedProject);
+    if (!selectedProjectData) return;
+
+    const userMessage = {
+      id: `msg-${Date.now()}-user`,
+      sender: "user",
+      message: appChatInput
+    };
+
+    const aiResponse = {
+      id: `msg-${Date.now()}-ai`,
+      sender: "ai", 
+      message: getAppTypeResponses(selectedProjectData.name, appChatInput)
+    };
+
+    setAppChatMessages(prev => [...prev, userMessage, aiResponse]);
+    setAppChatInput("");
   };
 
   return (
@@ -365,9 +442,100 @@ export default function ChatDevelopment() {
       <div className="lg:col-span-1">
         <Card className="shadow-sm border border-gray-100 h-full">
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Live Preview</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Preview</h3>
             
-            <div className="space-y-6">
+            {/* Project Selection */}
+            <div className="mb-6">
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Select App to Preview</Label>
+              <Select value={selectedProject || ""} onValueChange={setSelectedProject}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose an app to preview" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.filter(p => p.status === "completed").map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedProject ? (
+              <div className="space-y-6">
+                {/* App Preview */}
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    <span className="ml-2 text-xs text-gray-500">Preview</span>
+                  </div>
+                  <div className="bg-white p-4 h-48 flex items-center justify-center">
+                    <div className="text-center">
+                      <Monitor size={32} className="mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm font-medium text-gray-900">
+                        {projects.find(p => p.id === selectedProject)?.name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Interactive preview running
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* App-specific Chat */}
+                <div className="border border-gray-200 rounded-lg">
+                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                    <div className="flex items-center space-x-2">
+                      <MessageSquare size={16} className="text-gray-600" />
+                      <span className="text-sm font-medium text-gray-700">Chat with your app</span>
+                    </div>
+                  </div>
+                  
+                  {/* Chat Messages */}
+                  <div className="h-40 overflow-y-auto p-3 space-y-2">
+                    {appChatMessages.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-xs text-gray-500">Start chatting with your {projects.find(p => p.id === selectedProject)?.name}</p>
+                      </div>
+                    ) : (
+                      appChatMessages.map((msg) => (
+                        <div key={msg.id} className={`text-xs p-2 rounded max-w-[80%] ${
+                          msg.sender === "user" 
+                            ? "bg-blue-100 text-blue-900 ml-auto" 
+                            : "bg-gray-100 text-gray-900"
+                        }`}>
+                          <div className="whitespace-pre-wrap">{msg.message}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  
+                  {/* Chat Input */}
+                  <div className="border-t border-gray-200 p-3">
+                    <div className="flex space-x-2">
+                      <Input
+                        value={appChatInput}
+                        onChange={(e) => setAppChatInput(e.target.value)}
+                        placeholder={`Ask your ${projects.find(p => p.id === selectedProject)?.name.toLowerCase()}...`}
+                        className="text-xs"
+                        onKeyPress={(e) => e.key === "Enter" && handleAppChatSend()}
+                        data-testid="input-app-chat"
+                      />
+                      <Button
+                        onClick={handleAppChatSend}
+                        size="sm"
+                        data-testid="button-send-app-chat"
+                      >
+                        <Send size={12} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
               {buildProgress === "building" ? (
                 <>
                   <div className="text-center">
@@ -443,7 +611,8 @@ export default function ChatDevelopment() {
                   </div>
                 </>
               )}
-            </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

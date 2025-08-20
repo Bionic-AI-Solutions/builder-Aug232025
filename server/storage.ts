@@ -5,7 +5,10 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
   
   // Projects
   getProjects(userId: string): Promise<Project[]>;
@@ -42,7 +45,7 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
-    // Create demo user
+    // Create demo users
     const demoUser: User = {
       id: "demo-user-id",
       username: "demo",
@@ -54,14 +57,55 @@ export class MemStorage implements IStorage {
     };
     this.users.set(demoUser.id, demoUser);
 
+    // Additional demo users for admin panel
+    const additionalUsers: User[] = [
+      {
+        id: "user-2",
+        username: "john_dev",
+        email: "john@example.com",
+        password: "password123",
+        name: "John Smith",
+        plan: "Free",
+        createdAt: new Date("2024-12-15"),
+      },
+      {
+        id: "user-3",
+        username: "alice_coder",
+        email: "alice@company.com",
+        password: "password123",
+        name: "Alice Cooper",
+        plan: "Professional",
+        createdAt: new Date("2024-12-14"),
+      },
+      {
+        id: "user-4",
+        username: "mike_startup",
+        email: "mike@startup.io",
+        password: "password123",
+        name: "Mike Wilson",
+        plan: "Enterprise",
+        createdAt: new Date("2024-12-13"),
+      },
+      {
+        id: "user-5",
+        username: "emma_designer",
+        email: "emma@design.co",
+        password: "password123",
+        name: "Emma Brown",
+        plan: "Professional",
+        createdAt: new Date("2024-12-12"),
+      },
+    ];
+    additionalUsers.forEach(user => this.users.set(user.id, user));
+
     // Create demo projects
     const projects: Project[] = [
       {
         id: "project-1",
         userId: demoUser.id,
         name: "Restaurant App",
-        description: "Complete restaurant management system",
-        prompt: "Create a comprehensive restaurant management application with menu management, order processing, and staff dashboard",
+        description: "Complete restaurant management system with online ordering",
+        prompt: "Create a comprehensive restaurant management application with menu management, order processing, table reservations, and staff dashboard",
         status: "completed",
         llm: "claude",
         mcpServers: ["database", "api", "payment"],
@@ -70,39 +114,76 @@ export class MemStorage implements IStorage {
           { name: "orders.js", size: "8.1kb", type: "javascript" },
           { name: "styles.css", size: "3.2kb", type: "css" },
           { name: "admin.html", size: "5.7kb", type: "html" },
+          { name: "reservations.js", size: "4.8kb", type: "javascript" },
         ],
         createdAt: new Date("2024-12-18"),
       },
       {
         id: "project-2",
         userId: demoUser.id,
-        name: "Customer Support",
-        description: "AI-powered customer support system",
-        prompt: "Build a customer support application with ticket management, live chat, and knowledge base integration",
-        status: "testing",
-        llm: "gemini",
-        mcpServers: ["database", "api", "auth"],
+        name: "E-commerce Store",
+        description: "Modern e-commerce platform with cart and payments",
+        prompt: "Build a complete e-commerce store with product catalog, shopping cart, payment processing, and order management",
+        status: "completed",
+        llm: "claude",
+        mcpServers: ["database", "api", "payment"],
         files: [
-          { name: "tickets.js", size: "12.3kb", type: "javascript" },
-          { name: "chat.html", size: "6.8kb", type: "html" },
-          { name: "knowledge.json", size: "4.5kb", type: "json" },
+          { name: "products.json", size: "15.7kb", type: "json" },
+          { name: "cart.js", size: "9.3kb", type: "javascript" },
+          { name: "checkout.html", size: "7.2kb", type: "html" },
+          { name: "store.css", size: "6.8kb", type: "css" },
+          { name: "payments.js", size: "11.4kb", type: "javascript" },
         ],
         createdAt: new Date("2024-12-17"),
       },
       {
         id: "project-3",
         userId: demoUser.id,
-        name: "Tour Guide",
-        description: "Interactive tour guide application",
-        prompt: "Create an interactive tour guide app with location-based recommendations and offline map support",
-        status: "development",
-        llm: "llama",
-        mcpServers: ["database", "api"],
+        name: "Blog Platform",
+        description: "Personal blog with content management",
+        prompt: "Create a modern blog platform with content editor, categories, comments, and SEO optimization",
+        status: "completed",
+        llm: "gemini",
+        mcpServers: ["database", "api", "auth"],
         files: [
-          { name: "maps.js", size: "15.2kb", type: "javascript" },
-          { name: "locations.json", size: "8.9kb", type: "json" },
+          { name: "posts.js", size: "12.3kb", type: "javascript" },
+          { name: "editor.html", size: "8.9kb", type: "html" },
+          { name: "blog.css", size: "5.4kb", type: "css" },
+          { name: "comments.js", size: "6.7kb", type: "javascript" },
         ],
         createdAt: new Date("2024-12-16"),
+      },
+      {
+        id: "project-4",
+        userId: demoUser.id,
+        name: "Fitness Tracker",
+        description: "Personal fitness and workout tracking app",
+        prompt: "Build a fitness tracking application with workout plans, progress tracking, and health metrics",
+        status: "testing",
+        llm: "claude",
+        mcpServers: ["database", "api"],
+        files: [
+          { name: "workouts.json", size: "18.2kb", type: "json" },
+          { name: "tracker.js", size: "14.5kb", type: "javascript" },
+          { name: "fitness.css", size: "7.3kb", type: "css" },
+        ],
+        createdAt: new Date("2024-12-15"),
+      },
+      {
+        id: "project-5",
+        userId: demoUser.id,
+        name: "Task Manager",
+        description: "Team collaboration and project management tool",
+        prompt: "Create a task management application with team collaboration, project boards, and deadline tracking",
+        status: "development",
+        llm: "llama",
+        mcpServers: ["database", "api", "auth"],
+        files: [
+          { name: "tasks.js", size: "16.8kb", type: "javascript" },
+          { name: "board.html", size: "9.6kb", type: "html" },
+          { name: "team.json", size: "3.9kb", type: "json" },
+        ],
+        createdAt: new Date("2024-12-14"),
       },
     ];
 
@@ -210,6 +291,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const user: User = { 
@@ -220,6 +305,19 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, ...updates };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    return this.users.delete(id);
   }
 
   // Projects

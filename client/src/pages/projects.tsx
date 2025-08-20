@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
+import { useSearch } from "wouter";
 import { type Project } from "@shared/schema";
 import { Eye, MessageCircle, Calendar, Cpu, FileText } from "lucide-react";
 import ProjectDetailsModal from "@/components/modals/project-details-modal";
@@ -11,6 +12,7 @@ import ChatAppModal from "@/components/modals/chat-app-modal";
 
 export default function Projects() {
   const { user } = useAuth();
+  const searchParams = useSearch();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
@@ -23,6 +25,20 @@ export default function Projects() {
     },
     enabled: !!user?.id,
   });
+
+  // Auto-open project details modal if view parameter is present
+  useEffect(() => {
+    const urlParams = new URLSearchParams(searchParams);
+    const viewProjectId = urlParams.get('view');
+    
+    if (viewProjectId && projects.length > 0) {
+      const project = projects.find(p => p.id === viewProjectId);
+      if (project) {
+        setSelectedProject(project);
+        setShowDetailsModal(true);
+      }
+    }
+  }, [searchParams, projects]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

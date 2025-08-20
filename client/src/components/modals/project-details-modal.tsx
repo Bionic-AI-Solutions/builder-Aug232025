@@ -111,18 +111,77 @@ export default function ProjectDetailsModal({
   };
 
   const getFileIcon = (type: string) => {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case "javascript":
-        return "📄";
+      case "js":
+        return "📜";
       case "html":
+      case "htm":
         return "🌐";
       case "css":
         return "🎨";
       case "json":
         return "📋";
+      case "typescript":
+      case "ts":
+        return "📘";
+      case "python":
+      case "py":
+        return "🐍";
+      case "sql":
+        return "🗃️";
+      case "yml":
+      case "yaml":
+        return "⚙️";
+      case "md":
+      case "markdown":
+        return "📝";
+      case "txt":
+        return "📄";
+      case "xml":
+        return "🔖";
+      case "config":
+        return "⚙️";
       default:
         return "📄";
     }
+  };
+
+  const getFileTypeColor = (type: string) => {
+    switch (type.toLowerCase()) {
+      case "javascript":
+      case "js":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      case "html":
+      case "htm":
+        return "text-orange-600 bg-orange-50 border-orange-200";
+      case "css":
+        return "text-blue-600 bg-blue-50 border-blue-200";
+      case "json":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "typescript":
+      case "ts":
+        return "text-blue-700 bg-blue-50 border-blue-200";
+      case "python":
+      case "py":
+        return "text-green-700 bg-green-50 border-green-200";
+      default:
+        return "text-gray-600 bg-gray-50 border-gray-200";
+    }
+  };
+
+  const handleDownloadFile = (file: any) => {
+    toast({
+      title: "Download Started",
+      description: `Downloading ${file.name}...`,
+    });
+  };
+
+  const handleViewFile = (file: any) => {
+    toast({
+      title: "File Preview",
+      description: `Opening ${file.name} in preview mode...`,
+    });
   };
 
   return (
@@ -209,39 +268,97 @@ export default function ProjectDetailsModal({
 
           {/* Project Files */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-gray-700">Project Files</label>
-              <span className="text-sm text-gray-600">
-                Total: {getTotalFileSize()}
-              </span>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Project Files</label>
+                <p className="text-xs text-gray-500 mt-1">Files generated during development</p>
+              </div>
+              <div className="text-right">
+                <span className="text-sm text-gray-600">
+                  {project.files?.length || 0} files • {getTotalFileSize()}
+                </span>
+              </div>
             </div>
             
             {!project.files || project.files.length === 0 ? (
-              <p className="text-gray-500 text-sm">No files generated yet</p>
+              <Card className="border-dashed border-gray-300 bg-gray-50">
+                <CardContent className="p-6 text-center">
+                  <FileText size={32} className="mx-auto text-gray-400 mb-2" />
+                  <p className="text-gray-500 text-sm">No files generated yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Files will appear here once the project is built</p>
+                </CardContent>
+              </Card>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {project.files.map((file, index) => (
-                  <Card key={index} className="border-gray-100">
-                    <CardContent className="p-3">
+                  <Card key={index} className="border-gray-100 hover:shadow-sm transition-shadow">
+                    <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <span className="text-lg mr-3">
-                            {getFileIcon(file.type)}
-                          </span>
-                          <div>
-                            <p className="font-medium text-gray-900">{file.name}</p>
-                            <p className="text-sm text-gray-600 capitalize">
-                              {file.type} file
+                        <div className="flex items-center flex-1">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-lg border mr-3">
+                            <span className="text-lg">
+                              {getFileIcon(file.type)}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <p className="font-medium text-gray-900">{file.name}</p>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${getFileTypeColor(file.type)}`}
+                              >
+                                {file.type.toUpperCase()}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Created during project generation • {file.size}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-sm text-gray-600">{file.size}</span>
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewFile(file)}
+                            className="text-gray-600 hover:text-gray-900"
+                            data-testid={`button-view-file-${index}`}
+                          >
+                            <FileText size={14} className="mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDownloadFile(file)}
+                            className="text-gray-600 hover:text-gray-900"
+                            data-testid={`button-download-file-${index}`}
+                          >
+                            <Download size={14} className="mr-1" />
+                            Download
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
+                
+                {/* File Summary */}
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center">
+                        <FileText size={16} className="mr-2 text-blue-600" />
+                        <span className="text-blue-900 font-medium">
+                          Files Summary
+                        </span>
+                      </div>
+                      <div className="text-blue-700">
+                        <span className="font-medium">{project.files?.length || 0}</span> files • 
+                        <span className="font-medium">{getTotalFileSize()}</span> total
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </div>

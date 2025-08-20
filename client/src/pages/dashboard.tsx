@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
 import { type Project } from "@shared/schema";
 import { 
   Smartphone, 
@@ -15,6 +16,7 @@ import {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
   const { data: projects = [], isLoading } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
@@ -181,11 +183,21 @@ export default function Dashboard() {
                     </div>
                     
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" data-testid={`button-view-${project.id}`}>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => setLocation(`/projects?view=${project.id}`)}
+                        data-testid={`button-view-${project.id}`}
+                      >
                         <Eye size={16} className="mr-1" />
                         View
                       </Button>
-                      <Button size="sm" variant="outline" data-testid={`button-chat-${project.id}`}>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => setLocation(`/chat-development`)}
+                        data-testid={`button-chat-${project.id}`}
+                      >
                         <MessageCircle size={16} className="mr-1" />
                         Chat
                       </Button>
