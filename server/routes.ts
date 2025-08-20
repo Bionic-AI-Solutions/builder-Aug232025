@@ -1,0 +1,177 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { insertUserSchema, insertProjectSchema, insertMcpServerSchema, insertChatMessageSchema } from "@shared/schema";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user || user.password !== password) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      res.json({ user: { ...user, password: undefined } });
+    } catch (error) {
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  // User routes
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json({ ...user, password: undefined });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  // Project routes
+  app.get("/api/projects", async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ error: "User ID required" });
+      }
+      const projects = await storage.getProjects(userId);
+      res.json(projects);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
+  app.get("/api/projects/:id", async (req, res) => {
+    try {
+      const project = await storage.getProject(req.params.id);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      res.json(project);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch project" });
+    }
+  });
+
+  app.post("/api/projects", async (req, res) => {
+    try {
+      const validatedData = insertProjectSchema.parse(req.body);
+      const project = await storage.createProject(validatedData);
+      res.status(201).json(project);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid project data" });
+    }
+  });
+
+  // MCP Server routes
+  app.get("/api/mcp-servers", async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ error: "User ID required" });
+      }
+      const servers = await storage.getMcpServers(userId);
+      res.json(servers);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch MCP servers" });
+    }
+  });
+
+  app.post("/api/mcp-servers", async (req, res) => {
+    try {
+      const validatedData = insertMcpServerSchema.parse(req.body);
+      const server = await storage.createMcpServer(validatedData);
+      res.status(201).json(server);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid server data" });
+    }
+  });
+
+  app.put("/api/mcp-servers/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      const server = await storage.updateMcpServer(req.params.id, updates);
+      if (!server) {
+        return res.status(404).json({ error: "Server not found" });
+      }
+      res.json(server);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update server" });
+    }
+  });
+
+  app.delete("/api/mcp-servers/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteMcpServer(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Server not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete server" });
+    }
+  });
+
+  // Chat routes
+  app.get("/api/chat/messages", async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ error: "User ID required" });
+      }
+      const messages = await storage.getChatMessages(userId);
+      res.json(messages);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch chat messages" });
+    }
+  });
+
+  app.post("/api/chat/messages", async (req, res) => {
+    try {
+      const validatedData = insertChatMessageSchema.parse(req.body);
+      const message = await storage.createChatMessage(validatedData);
+      
+      // Simulate AI response for user messages
+      if (validatedData.sender === "user") {
+        setTimeout(async () => {
+          const aiResponses = [
+            "I'll help you build that application. Let me analyze your requirements and suggest the best approach with the right MCP servers and components.",
+            "Great idea! I can create a comprehensive solution for you. Would you like me to start with the core functionality or focus on specific features first?",
+            "Perfect! I'll design an application that meets your needs. Let me recommend the optimal tech stack and MCP server configuration for this project.",
+            "I'll help you create a comprehensive user analytics dashboard. Let me understand your requirements:\n\n**What specific metrics do you want to track?**\n• Real-time engagement metrics and revenue tracking\n• User activity, engagement rates, revenue visualization\n• Conversion analysis and funnel metrics\n• Performance benchmarks and growth indicators\n\nShall I start building the dashboard structure with these features?"
+          ];
+          
+          const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+          await storage.createChatMessage({
+            userId: validatedData.userId,
+            sender: "ai",
+            message: randomResponse
+          });
+        }, 1000);
+      }
+      
+      res.status(201).json(message);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid message data" });
+    }
+  });
+
+  // Marketplace routes
+  app.get("/api/marketplace", async (req, res) => {
+    try {
+      const apps = await storage.getMarketplaceApps();
+      res.json(apps);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch marketplace apps" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
