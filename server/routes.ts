@@ -69,6 +69,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/projects/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      const project = await storage.updateProject(req.params.id, updates);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      res.json(project);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update project" });
+    }
+  });
+
   // MCP Server routes
   app.get("/api/mcp-servers", async (req, res) => {
     try {
@@ -142,9 +155,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         setTimeout(async () => {
           const aiResponses = [
             "I'll help you build that application. Let me analyze your requirements and suggest the best approach with the right MCP servers and components.",
-            "Great idea! I can create a comprehensive solution for you. Would you like me to start with the core functionality or focus on specific features first?",
+            "Great idea! I can create a app for you. Would you like me to start with the core functionality or focus on specific features first?",
             "Perfect! I'll design an application that meets your needs. Let me recommend the optimal tech stack and MCP server configuration for this project.",
-            "I'll help you create a comprehensive user analytics dashboard. Let me understand your requirements:\n\n**What specific metrics do you want to track?**\n• Real-time engagement metrics and revenue tracking\n• User activity, engagement rates, revenue visualization\n• Conversion analysis and funnel metrics\n• Performance benchmarks and growth indicators\n\nShall I start building the dashboard structure with these features?"
+            "I can create a app for you that tracks user analytics. Let me understand your requirements:\n\n**What specific metrics do you want to track?**\n• Real-time engagement metrics and revenue tracking\n• User activity, engagement rates, revenue visualization\n• Conversion analysis and funnel metrics\n• Performance benchmarks and growth indicators\n\nShall I start building the dashboard structure with these features?"
           ];
           
           const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];

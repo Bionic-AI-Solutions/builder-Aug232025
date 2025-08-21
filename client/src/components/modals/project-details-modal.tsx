@@ -21,7 +21,9 @@ import {
   Download, 
   MessageCircle,
   ExternalLink,
-  X
+  X,
+  Upload,
+  CheckCircle
 } from "lucide-react";
 
 interface ProjectDetailsModalProps {
@@ -39,22 +41,22 @@ export default function ProjectDetailsModal({
   const queryClient = useQueryClient();
   const [isDeploying, setIsDeploying] = useState(false);
 
-  const deployToMarketplaceMutation = useMutation({
-    mutationFn: async (projectData: any) => {
-      return apiRequest("POST", "/api/marketplace", projectData);
+  const publishProjectMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      return apiRequest("PATCH", `/api/projects/${projectId}`, { published: "true" });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/marketplace"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       toast({
-        title: "Deployed Successfully",
-        description: "Your app has been deployed to the marketplace!",
+        title: "Published Successfully",
+        description: "Your project has been published to the marketplace!",
       });
       setIsDeploying(false);
     },
     onError: () => {
       toast({
-        title: "Deployment Failed",
-        description: "Failed to deploy app to marketplace. Please try again.",
+        title: "Publish Failed",
+        description: "Failed to publish project. Please try again.",
         variant: "destructive",
       });
       setIsDeploying(false);
@@ -74,11 +76,20 @@ export default function ProjectDetailsModal({
     }
   };
 
-  const handleDeploy = async () => {
+  const handlePublish = async () => {
     if (project.status !== "completed") {
       toast({
-        title: "Cannot Deploy",
-        description: "Only completed projects can be deployed to the marketplace.",
+        title: "Cannot Publish",
+        description: "Only completed projects can be published to the marketplace.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if ((project as any).published === "true") {
+      toast({
+        title: "Already Published",
+        description: "This project is already published to the marketplace.",
         variant: "destructive",
       });
       return;
@@ -86,14 +97,7 @@ export default function ProjectDetailsModal({
 
     setIsDeploying(true);
     try {
-      await deployToMarketplaceMutation.mutateAsync({
-        projectId: project.id,
-        name: project.name,
-        description: project.description || `Generated with ${project.llm.toUpperCase()}`,
-        price: Math.floor(Math.random() * 5000) + 1500, // Random price between $15-$65
-        category: "custom",
-        icon: "🔧",
-      });
+      await publishProjectMutation.mutateAsync(project.id);
     } catch (error) {
       // Error handled by mutation
     }
@@ -379,21 +383,32 @@ export default function ProjectDetailsModal({
 
           {/* Action Buttons */}
           <div className="flex space-x-3 pt-4 border-t">
-            <Button
-              onClick={handleDeploy}
-              disabled={isDeploying || project.status !== "completed"}
-              data-testid="button-deploy-project"
-            >
-              <ExternalLink size={16} className="mr-2" />
-              {isDeploying ? "Deploying..." : "Deploy to Marketplace"}
-            </Button>
+            {(project as any).published === "true" ? (
+              <Button
+                disabled
+                className="bg-green-100 text-green-700 cursor-not-allowed"
+                data-testid="button-published-project"
+              >
+                <CheckCircle size={16} className="mr-2" />
+                Published
+              </Button>
+            ) : (
+              <Button
+                onClick={handlePublish}
+                disabled={isDeploying || project.status !== "completed"}
+                data-testid="button-publish-project"
+              >
+                <Upload size={16} className="mr-2" />
+                {isDeploying ? "Publishing..." : "Publish"}
+              </Button>
+            )}
             
             <Button
               variant="outline"
               data-testid="button-chat-with-project"
             >
               <MessageCircle size={16} className="mr-2" />
-              Chat with App
+              Chat
             </Button>
             
             <Button

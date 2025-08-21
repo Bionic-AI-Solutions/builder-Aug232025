@@ -23,6 +23,9 @@ export const projects = pgTable("projects", {
   llm: text("llm").notNull(), // claude, gemini, llama, gpt4
   mcpServers: jsonb("mcp_servers").$type<string[]>().notNull().default([]),
   files: jsonb("files").$type<{name: string, size: string, type: string}[]>().default([]),
+  revenue: integer("revenue").default(0), // in cents
+  revenueGrowth: integer("revenue_growth").default(0), // percentage
+  published: text("published").default("false"), // "true" or "false"
   createdAt: timestamp("created_at").defaultNow(),
 });
 

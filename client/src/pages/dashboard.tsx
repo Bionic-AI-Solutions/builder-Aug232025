@@ -11,7 +11,9 @@ import {
   Network, 
   Store,
   Eye,
-  MessageCircle
+  MessageCircle,
+  DollarSign,
+  TrendingUp
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -44,11 +46,15 @@ export default function Dashboard() {
     },
   });
 
+  const totalRevenue = projects
+    .filter(p => p.status === "completed")
+    .reduce((sum, p: any) => sum + (p.revenue || 0), 0);
+
   const metrics = {
     totalApps: projects.length,
     activeProjects: projects.filter(p => p.status !== "completed").length,
     mcpConnections: servers.filter((s: any) => s.status === "connected").length,
-    marketplaceApps: marketplaceApps.length,
+    revenue: totalRevenue,
   };
 
   const getStatusBadge = (status: string) => {
@@ -132,17 +138,25 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border border-gray-100">
+        <Card 
+          className="shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" 
+          onClick={() => setLocation('/analytics')}
+          data-testid="card-revenue-metric"
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Marketplace Apps</p>
-                <p className="text-3xl font-bold text-gray-900" data-testid="metric-marketplace-apps">
-                  {metrics.marketplaceApps}
+                <p className="text-sm text-gray-600">Revenue Earned</p>
+                <p className="text-3xl font-bold text-gray-900" data-testid="metric-revenue">
+                  ${(metrics.revenue / 100).toFixed(2)}
+                </p>
+                <p className="text-sm text-green-600 flex items-center mt-1">
+                  <TrendingUp size={14} className="mr-1" />
+                  +12.5% this month
                 </p>
               </div>
-              <div className="bg-orange-100 p-3 rounded-full">
-                <Store className="text-orange-600" size={24} />
+              <div className="bg-green-100 p-3 rounded-full">
+                <DollarSign className="text-green-600" size={24} />
               </div>
             </div>
           </CardContent>
@@ -177,6 +191,16 @@ export default function Dashboard() {
                       <p className="text-sm text-gray-600">
                         LLM: {project.llm.charAt(0).toUpperCase() + project.llm.slice(1)}
                       </p>
+                      {project.status === "completed" && (project as any).revenue && (
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-green-600 font-medium">
+                            Revenue: ${((project as any).revenue / 100).toFixed(2)}
+                          </p>
+                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                            +{(project as any).revenueGrowth || 15}%
+                          </span>
+                        </div>
+                      )}
                       <p className="text-sm text-gray-600">
                         Files: {project.files?.length || 0} files
                       </p>

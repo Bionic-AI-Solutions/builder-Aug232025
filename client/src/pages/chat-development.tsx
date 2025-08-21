@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -77,6 +76,14 @@ export default function ChatDevelopment() {
     },
     enabled: !!user?.id,
   });
+
+  // LLM options
+  const llmOptions = [
+    { value: "claude", label: "Claude 3.7" },
+    { value: "gemini", label: "Gemini Pro" },
+    { value: "llama", label: "LLaMA 3.3" },
+    { value: "gpt4", label: "GPT-4" },
+  ];
 
   // Mutations
   const sendMessageMutation = useMutation({
@@ -165,9 +172,9 @@ export default function ChatDevelopment() {
         mcpServers: selectedServers,
         status: "development",
         files: [
-          { name: "app.js", size: "12.4kb", type: "javascript" },
-          { name: "index.html", size: "3.2kb", type: "html" },
-          { name: "styles.css", size: "2.1kb", type: "css" },
+          { name: "Knowledge Article 1", size: "12.4kb", type: "markdown" },
+          { name: "Knowledge Article 2", size: "3.2kb", type: "markdown" },
+          { name: "Knowledge Article 3", size: "2.1kb", type: "markdown" },
         ],
       });
     } catch (error) {
@@ -254,368 +261,274 @@ export default function ChatDevelopment() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
-      {/* Main Chat Area */}
-      <div className="lg:col-span-2 space-y-6 flex flex-col">
-        {/* Chat Messages */}
-        <Card className="flex-1 shadow-sm border border-gray-100">
-          <CardContent className="p-6 h-96 overflow-y-auto">
-            <div className="space-y-4">
-              {messages.length === 0 ? (
-                <div className="text-center py-12">
-                  <Bot size={48} className="mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500">Start a conversation to develop your app</p>
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <div key={message.id} className="flex items-start space-x-3">
-                    <div className={`rounded-full p-2 ${
-                      message.sender === "user" 
-                        ? "bg-gray-200" 
-                        : "bg-blue-500"
-                    }`}>
-                      {message.sender === "user" ? (
-                        <User size={16} className="text-gray-600" />
-                      ) : (
-                        <Bot size={16} className="text-white" />
-                      )}
-                    </div>
-                    <div className={`rounded-lg p-3 max-w-2xl ${
-                      message.sender === "user" 
-                        ? "bg-gray-100" 
-                        : "bg-blue-50"
-                    }`}>
-                      <p className="text-gray-800 whitespace-pre-wrap">
-                        {message.message}
-                      </p>
-                    </div>
+    <div className="flex flex-col h-[calc(100vh-8rem)] space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+        {/* Main Chat Area */}
+        <div className="lg:col-span-2 flex flex-col space-y-4 min-h-0">
+          {/* Chat Messages */}
+          <Card className="flex-1 shadow-sm border border-gray-100 min-h-0">
+            <CardContent className="p-6 h-full overflow-y-auto">
+              <div className="space-y-4">
+                {messages.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Bot size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-500">Start a conversation to develop your app</p>
                   </div>
-                ))
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Chat Input */}
-        <Card className="shadow-sm border border-gray-100">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask AI to generate a persona prompt for your agent"
-                className="flex-1"
-                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                data-testid="input-chat-message"
-              />
-              <Button
-                onClick={handleTransferPrompt}
-                className="bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap"
-                data-testid="button-transfer-prompt"
-              >
-                Transfer left ready prompt
-              </Button>
-              <Button variant="outline" size="icon" data-testid="button-voice-input">
-                <Mic size={16} />
-              </Button>
-              <Button variant="outline" size="icon" data-testid="button-attach-file">
-                <Paperclip size={16} />
-              </Button>
-              <Button 
-                onClick={handleSendMessage}
-                disabled={sendMessageMutation.isPending}
-                data-testid="button-send-message"
-              >
-                <Send size={16} />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* App Configuration */}
-        <Card className="shadow-sm border border-gray-100">
-          <CardContent className="p-6 space-y-6">
-            {/* App Name & Knowledge Attachments */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="app-name">App Name</Label>
-                <Input
-                  id="app-name"
-                  value={appName}
-                  onChange={(e) => setAppName(e.target.value)}
-                  placeholder="Analytics Dashboard"
-                  data-testid="input-app-name"
-                />
+                ) : (
+                  messages.map((message) => (
+                    <div key={message.id} className="flex items-start space-x-3">
+                      <div className={`rounded-full p-2 ${
+                        message.sender === "user" 
+                          ? "bg-gray-200" 
+                          : "bg-blue-500"
+                      }`}>
+                        {message.sender === "user" ? (
+                          <User size={16} className="text-gray-600" />
+                        ) : (
+                          <Bot size={16} className="text-white" />
+                        )}
+                      </div>
+                      <div className={`rounded-lg p-3 max-w-2xl ${
+                        message.sender === "user" 
+                          ? "bg-gray-100" 
+                          : "bg-blue-50"
+                      }`}>
+                        <p className="text-gray-800 whitespace-pre-wrap">
+                          {message.message}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
               </div>
-              <div>
-                <Label>Knowledge Attachments</Label>
-                <Button variant="outline" className="w-full" data-testid="button-browse-files">
-                  Browse Files
+            </CardContent>
+          </Card>
+
+          {/* Chat Input */}
+          <Card className="shadow-sm border border-gray-100">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <Input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask AI to generate a persona prompt for your agent"
+                  className="flex-1"
+                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                  data-testid="input-chat-message"
+                />
+                <Button
+                  onClick={handleTransferPrompt}
+                  className="bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap"
+                  data-testid="button-transfer-prompt"
+                >
+                  Transfer left ready prompt
+                </Button>
+                <Button variant="outline" size="icon" data-testid="button-voice-input">
+                  <Mic size={16} />
+                </Button>
+                <Button variant="outline" size="icon" data-testid="button-attach-file">
+                  <Paperclip size={16} />
+                </Button>
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={sendMessageMutation.isPending}
+                  data-testid="button-send-message"
+                >
+                  <Send size={16} />
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Panel - Live Preview */}
+        <div className="lg:col-span-1 flex flex-col space-y-4 min-h-0">
+          <Card className="shadow-sm border border-gray-100">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Preview</h3>
+              
+              {/* Project Selection */}
+              <div className="mb-6">
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">Select App to Preview</Label>
+                <Select value={selectedProject || ""} onValueChange={setSelectedProject}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose an app to preview" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.filter(p => p.status === "completed").map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedProject ? (
+                <div className="space-y-4">
+                  {/* App-specific Chat */}
+                  <div className="border border-gray-200 rounded-lg">
+                    <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                      <div className="flex items-center space-x-2">
+                        <MessageSquare size={16} className="text-gray-600" />
+                        <span className="text-sm font-medium text-gray-700">Chat with your app</span>
+                      </div>
+                    </div>
+                    
+                    {/* Chat Messages */}
+                    <div className="h-40 overflow-y-auto p-3 space-y-2">
+                      {appChatMessages.length === 0 ? (
+                        <div className="text-center py-4">
+                          <p className="text-xs text-gray-500">Start chatting with your {projects.find(p => p.id === selectedProject)?.name}</p>
+                        </div>
+                      ) : (
+                        appChatMessages.map((msg) => (
+                          <div key={msg.id} className={`text-xs p-2 rounded max-w-[80%] ${
+                            msg.sender === "user" 
+                              ? "bg-blue-100 text-blue-900 ml-auto" 
+                              : "bg-gray-100 text-gray-900"
+                          }`}>
+                            <div className="whitespace-pre-wrap">{msg.message}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    
+                    {/* Chat Input */}
+                    <div className="border-t border-gray-200 p-3">
+                      <div className="flex space-x-2">
+                        <Input
+                          value={appChatInput}
+                          onChange={(e) => setAppChatInput(e.target.value)}
+                          placeholder={`Ask your ${projects.find(p => p.id === selectedProject)?.name.toLowerCase()}...`}
+                          className="text-xs"
+                          onKeyPress={(e) => e.key === "Enter" && handleAppChatSend()}
+                          data-testid="input-app-chat"
+                        />
+                        <Button
+                          onClick={handleAppChatSend}
+                          size="sm"
+                          data-testid="button-send-app-chat"
+                        >
+                          <Send size={12} />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Monitor size={32} className="mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">Select an app to start chatting</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* App Configuration - Fixed at bottom */}
+      <Card className="shadow-sm border border-gray-100">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+            {/* App Name */}
+            <div className="lg:col-span-2">
+              <Label htmlFor="app-name">App Name</Label>
+              <Input
+                id="app-name"
+                value={appName}
+                onChange={(e) => setAppName(e.target.value)}
+                placeholder="Analytics Dashboard"
+                data-testid="input-app-name"
+              />
             </div>
 
-            {/* Prompt Area */}
-            <div>
+            {/* Prompt */}
+            <div className="lg:col-span-4">
               <Label htmlFor="main-prompt">Prompt</Label>
               <Textarea
                 id="main-prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                rows={6}
-                placeholder="Create a comprehensive user analytics dashboard that tracks real-time engagement metrics, revenue data, user activity patterns, and conversion analysis with interactive visualizations..."
+                rows={2}
+                placeholder="Create a comprehensive user analytics dashboard..."
                 data-testid="textarea-main-prompt"
               />
             </div>
 
-            {/* LLM & MCP Servers Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label className="text-base font-medium">LLM</Label>
-                <RadioGroup value={selectedLLM} onValueChange={setSelectedLLM} className="mt-3">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="claude" id="claude" />
-                    <Label htmlFor="claude">Claude 3.7</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="gemini" id="gemini" />
-                    <Label htmlFor="gemini">Gemini Pro</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="llama" id="llama" />
-                    <Label htmlFor="llama">LLaMA 3.3</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="gpt4" id="gpt4" />
-                    <Label htmlFor="gpt4">GPT-4</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div>
-                <Label className="text-base font-medium">MCP Servers</Label>
-                <div className="mt-3 space-y-2">
-                  {servers.map((server) => (
-                    <div key={server.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={server.id}
-                        checked={selectedServers.includes(server.id)}
-                        onCheckedChange={() => toggleServer(server.id)}
-                      />
-                      <Label htmlFor={server.id} className="flex items-center space-x-2">
-                        <span>{server.name}</span>
-                        <Badge variant={server.status === "connected" ? "default" : "secondary"}>
-                          {server.status}
-                        </Badge>
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Save App Button */}
-            <div className="text-center">
-              <Button
-                onClick={handleSaveApp}
-                disabled={createProjectMutation.isPending || buildProgress === "building"}
-                size="lg"
-                className="px-8"
-                data-testid="button-save-app"
-              >
-                {buildProgress === "building" ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Building App...
-                  </>
-                ) : (
-                  "Save App"
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Right Panel - Live Preview */}
-      <div className="lg:col-span-1">
-        <Card className="shadow-sm border border-gray-100 h-full">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Live Preview</h3>
-            
-            {/* Project Selection */}
-            <div className="mb-6">
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Select App to Preview</Label>
-              <Select value={selectedProject || ""} onValueChange={setSelectedProject}>
+            {/* LLM Selection */}
+            <div className="lg:col-span-2">
+              <Label className="text-sm font-medium">LLM</Label>
+              <Select value={selectedLLM} onValueChange={setSelectedLLM}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choose an app to preview" />
+                  <SelectValue placeholder="Select LLM" />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects.filter(p => p.status === "completed").map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
+                  {llmOptions.map((llm) => (
+                    <SelectItem key={llm.value} value={llm.value}>
+                      {llm.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {selectedProject ? (
-              <div className="space-y-6">
-                {/* App Preview */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                    <span className="ml-2 text-xs text-gray-500">Preview</span>
-                  </div>
-                  <div className="bg-white p-4 h-48 flex items-center justify-center">
-                    <div className="text-center">
-                      <Monitor size={32} className="mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm font-medium text-gray-900">
-                        {projects.find(p => p.id === selectedProject)?.name}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Interactive preview running
-                      </p>
-                    </div>
-                  </div>
+            {/* MCP Servers */}
+            <div className="lg:col-span-2">
+              <Label className="text-sm font-medium">MCP Servers</Label>
+              <Select onValueChange={(value) => toggleServer(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={`${selectedServers.length} selected`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {servers.map((server) => (
+                    <SelectItem key={server.id} value={server.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{server.name}</span>
+                        {selectedServers.includes(server.id) && (
+                          <CheckCircle size={14} className="text-green-600" />
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedServers.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedServers.map((serverId) => {
+                    const server = servers.find(s => s.id === serverId);
+                    return server ? (
+                      <Badge key={serverId} variant="secondary" className="text-xs">
+                        {server.name}
+                      </Badge>
+                    ) : null;
+                  })}
                 </div>
-
-                {/* App-specific Chat */}
-                <div className="border border-gray-200 rounded-lg">
-                  <div className="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                    <div className="flex items-center space-x-2">
-                      <MessageSquare size={16} className="text-gray-600" />
-                      <span className="text-sm font-medium text-gray-700">Chat with your app</span>
-                    </div>
-                  </div>
-                  
-                  {/* Chat Messages */}
-                  <div className="h-40 overflow-y-auto p-3 space-y-2">
-                    {appChatMessages.length === 0 ? (
-                      <div className="text-center py-4">
-                        <p className="text-xs text-gray-500">Start chatting with your {projects.find(p => p.id === selectedProject)?.name}</p>
-                      </div>
-                    ) : (
-                      appChatMessages.map((msg) => (
-                        <div key={msg.id} className={`text-xs p-2 rounded max-w-[80%] ${
-                          msg.sender === "user" 
-                            ? "bg-blue-100 text-blue-900 ml-auto" 
-                            : "bg-gray-100 text-gray-900"
-                        }`}>
-                          <div className="whitespace-pre-wrap">{msg.message}</div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  
-                  {/* Chat Input */}
-                  <div className="border-t border-gray-200 p-3">
-                    <div className="flex space-x-2">
-                      <Input
-                        value={appChatInput}
-                        onChange={(e) => setAppChatInput(e.target.value)}
-                        placeholder={`Ask your ${projects.find(p => p.id === selectedProject)?.name.toLowerCase()}...`}
-                        className="text-xs"
-                        onKeyPress={(e) => e.key === "Enter" && handleAppChatSend()}
-                        data-testid="input-app-chat"
-                      />
-                      <Button
-                        onClick={handleAppChatSend}
-                        size="sm"
-                        data-testid="button-send-app-chat"
-                      >
-                        <Send size={12} />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-              {buildProgress === "building" ? (
-                <>
-                  <div className="text-center">
-                    <Loader2 size={48} className="mx-auto text-blue-500 animate-spin mb-4" />
-                    <h4 className="font-semibold text-gray-900 mb-2">Building your application...</h4>
-                    <p className="text-gray-600 text-sm">Processing your request</p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Build Progress</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center text-green-600">
-                        <CheckCircle size={16} className="mr-2" />
-                        <span className="text-sm">Project Setup</span>
-                      </div>
-                      <div className="flex items-center text-green-600">
-                        <CheckCircle size={16} className="mr-2" />
-                        <span className="text-sm">Database</span>
-                      </div>
-                      <div className="flex items-center text-blue-600">
-                        <Loader2 size={16} className="mr-2 animate-spin" />
-                        <span className="text-sm">UI Components</span>
-                      </div>
-                      <div className="flex items-center text-gray-400">
-                        <Clock size={16} className="mr-2" />
-                        <span className="text-sm">Authentication</span>
-                      </div>
-                      <div className="flex items-center text-gray-400">
-                        <Clock size={16} className="mr-2" />
-                        <span className="text-sm">Deployment</span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : buildProgress === "completed" ? (
-                <>
-                  <div className="text-center">
-                    <CheckCircle size={48} className="mx-auto text-green-500 mb-4" />
-                    <h4 className="font-semibold text-gray-900 mb-2">App Generated!</h4>
-                    <p className="text-gray-600 text-sm">Your application is ready</p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Build Progress</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center text-green-600">
-                        <CheckCircle size={16} className="mr-2" />
-                        <span className="text-sm">Project Created</span>
-                      </div>
-                      <div className="flex items-center text-green-600">
-                        <CheckCircle size={16} className="mr-2" />
-                        <span className="text-sm">Files Generated</span>
-                      </div>
-                      <div className="flex items-center text-green-600">
-                        <CheckCircle size={16} className="mr-2" />
-                        <span className="text-sm">Ready for Testing</span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-center">
-                    <Rocket size={48} className="mx-auto text-gray-400 mb-4" />
-                    <h4 className="font-semibold text-gray-900 mb-2">Ready to Build</h4>
-                    <p className="text-gray-600 text-sm">Configure your app and start building</p>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-600">
-                      Fill in the app details and click "Save App" to start the generation process.
-                    </p>
-                  </div>
-                </>
               )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="lg:col-span-2">
+              <Button
+                onClick={handleSaveApp}
+                disabled={createProjectMutation.isPending || buildProgress === "building"}
+                className="w-full"
+                data-testid="button-save-app"
+              >
+                {buildProgress === "building" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Building...
+                  </>
+                ) : (
+                  "Save App"
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -110,12 +110,15 @@ export class MemStorage implements IStorage {
         llm: "claude",
         mcpServers: ["database", "api", "payment"],
         files: [
-          { name: "menu.json", size: "2.4kb", type: "json" },
-          { name: "orders.js", size: "8.1kb", type: "javascript" },
-          { name: "styles.css", size: "3.2kb", type: "css" },
-          { name: "admin.html", size: "5.7kb", type: "html" },
-          { name: "reservations.js", size: "4.8kb", type: "javascript" },
+          { name: "Knowledge Article 1", size: "2.4kb", type: "markdown" },
+          { name: "Knowledge Article 2", size: "8.1kb", type: "markdown" },
+          { name: "Knowledge Article 3", size: "3.2kb", type: "markdown" },
+          { name: "Knowledge Article 4", size: "5.7kb", type: "markdown" },
+          { name: "Knowledge Article 5", size: "4.8kb", type: "markdown" },
         ],
+        revenue: 4500, // $45.00
+        revenueGrowth: 18,
+        published: "true",
         createdAt: new Date("2024-12-18"),
       },
       {
@@ -128,12 +131,15 @@ export class MemStorage implements IStorage {
         llm: "claude",
         mcpServers: ["database", "api", "payment"],
         files: [
-          { name: "products.json", size: "15.7kb", type: "json" },
-          { name: "cart.js", size: "9.3kb", type: "javascript" },
-          { name: "checkout.html", size: "7.2kb", type: "html" },
-          { name: "store.css", size: "6.8kb", type: "css" },
-          { name: "payments.js", size: "11.4kb", type: "javascript" },
+          { name: "Knowledge Article 1", size: "15.7kb", type: "markdown" },
+          { name: "Knowledge Article 2", size: "9.3kb", type: "markdown" },
+          { name: "Knowledge Article 3", size: "7.2kb", type: "markdown" },
+          { name: "Knowledge Article 4", size: "6.8kb", type: "markdown" },
+          { name: "Knowledge Article 5", size: "11.4kb", type: "markdown" },
         ],
+        revenue: 7250, // $72.50
+        revenueGrowth: 25,
+        published: "true",
         createdAt: new Date("2024-12-17"),
       },
       {
@@ -146,11 +152,14 @@ export class MemStorage implements IStorage {
         llm: "gemini",
         mcpServers: ["database", "api", "auth"],
         files: [
-          { name: "posts.js", size: "12.3kb", type: "javascript" },
-          { name: "editor.html", size: "8.9kb", type: "html" },
-          { name: "blog.css", size: "5.4kb", type: "css" },
-          { name: "comments.js", size: "6.7kb", type: "javascript" },
+          { name: "Knowledge Article 1", size: "12.3kb", type: "markdown" },
+          { name: "Knowledge Article 2", size: "8.9kb", type: "markdown" },
+          { name: "Knowledge Article 3", size: "5.4kb", type: "markdown" },
+          { name: "Knowledge Article 4", size: "6.7kb", type: "markdown" },
         ],
+        revenue: 3200, // $32.00
+        revenueGrowth: 12,
+        published: "false",
         createdAt: new Date("2024-12-16"),
       },
       {
@@ -163,10 +172,13 @@ export class MemStorage implements IStorage {
         llm: "claude",
         mcpServers: ["database", "api"],
         files: [
-          { name: "workouts.json", size: "18.2kb", type: "json" },
-          { name: "tracker.js", size: "14.5kb", type: "javascript" },
-          { name: "fitness.css", size: "7.3kb", type: "css" },
+          { name: "Knowledge Article 1", size: "18.2kb", type: "markdown" },
+          { name: "Knowledge Article 2", size: "14.5kb", type: "markdown" },
+          { name: "Knowledge Article 3", size: "7.3kb", type: "markdown" },
         ],
+        revenue: 0,
+        revenueGrowth: 0,
+        published: "false",
         createdAt: new Date("2024-12-15"),
       },
       {
@@ -179,10 +191,13 @@ export class MemStorage implements IStorage {
         llm: "llama",
         mcpServers: ["database", "api", "auth"],
         files: [
-          { name: "tasks.js", size: "16.8kb", type: "javascript" },
-          { name: "board.html", size: "9.6kb", type: "html" },
-          { name: "team.json", size: "3.9kb", type: "json" },
+          { name: "Knowledge Article 1", size: "16.8kb", type: "markdown" },
+          { name: "Knowledge Article 2", size: "9.6kb", type: "markdown" },
+          { name: "Knowledge Article 3", size: "3.9kb", type: "markdown" },
         ],
+        revenue: 0,
+        revenueGrowth: 0,
+        published: "false",
         createdAt: new Date("2024-12-14"),
       },
     ];
@@ -325,8 +340,11 @@ export class MemStorage implements IStorage {
       id, 
       description: insertProject.description || null,
       status: insertProject.status || "development",
-      mcpServers: insertProject.mcpServers ?? [],
-      files: insertProject.files ?? [],
+      mcpServers: Array.isArray(insertProject.mcpServers) ? insertProject.mcpServers : [],
+      files: Array.isArray(insertProject.files) ? insertProject.files : [],
+      revenue: insertProject.revenue || 0,
+      revenueGrowth: insertProject.revenueGrowth || 0,
+      published: insertProject.published || "false",
       createdAt: new Date() 
     };
     this.projects.set(id, project);
