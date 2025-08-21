@@ -37,7 +37,7 @@ import { X, Server } from "lucide-react";
 
 const serverConfigSchema = z.object({
   name: z.string().min(1, "Server name is required"),
-  type: z.enum(["sse", "stdio", "http", "websocket", "grpc"]),
+  type: z.enum(["sse", "stdio", "websocket", "grpc"]),
   url: z.string().optional(),
   description: z.string().optional(),
 });
@@ -53,7 +53,6 @@ interface ServerConfigModalProps {
 const serverTypes = [
   { value: "sse", label: "SSE (Server-Sent Events)", description: "Real-time streaming" },
   { value: "stdio", label: "Stdio", description: "Standard input/output" },
-  { value: "http", label: "HTTP", description: "REST API connections" },
   { value: "websocket", label: "WebSocket", description: "Bidirectional real-time" },
   { value: "grpc", label: "gRPC", description: "High-performance RPC" },
 ];
@@ -252,14 +251,12 @@ export default function ServerConfigModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {selectedType === "http" ? "HTTP URL" : 
-                       selectedType === "websocket" ? "WebSocket URL" : 
+                      {selectedType === "websocket" ? "WebSocket URL" : 
                        selectedType === "grpc" ? "gRPC Endpoint" : "URL/Endpoint"}
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder={
-                          selectedType === "http" ? "https://api.example.com" :
                           selectedType === "websocket" ? "wss://api.example.com" :
                           selectedType === "grpc" ? "grpc://api.example.com:9090" :
                           selectedType === "sse" ? "wss://sse.example.com" :

@@ -29,7 +29,9 @@ import {
   Clock,
   Loader2,
   Monitor,
-  MessageSquare
+  MessageSquare,
+  FileText,
+  Upload
 } from "lucide-react";
 
 export default function ChatDevelopment() {
@@ -47,6 +49,7 @@ export default function ChatDevelopment() {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [appChatInput, setAppChatInput] = useState("");
   const [appChatMessages, setAppChatMessages] = useState<{id: string, sender: string, message: string}[]>([]);
+  const [knowledgeFiles, setKnowledgeFiles] = useState<File[]>([]);
 
   // Fetch data
   const { data: messages = [] } = useQuery<ChatMessage[]>({
@@ -260,6 +263,22 @@ export default function ChatDevelopment() {
     setAppChatInput("");
   };
 
+  const handleKnowledgeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setKnowledgeFiles(prev => [...prev, ...newFiles]);
+      toast({
+        title: "Knowledge Files Added",
+        description: `Added ${newFiles.length} knowledge article(s) to your project.`,
+      });
+    }
+  };
+
+  const removeKnowledgeFile = (index: number) => {
+    setKnowledgeFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
@@ -442,6 +461,54 @@ export default function ChatDevelopment() {
                 placeholder="Analytics Dashboard"
                 data-testid="input-app-name"
               />
+            </div>
+
+            {/* Knowledge Attachments */}
+            <div className="lg:col-span-2">
+              <Label className="text-sm font-medium">Knowledge Attachments</Label>
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  multiple
+                  accept=".md,.txt,.pdf,.doc,.docx"
+                  onChange={handleKnowledgeUpload}
+                  className="hidden"
+                  id="knowledge-upload"
+                  data-testid="input-knowledge-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => document.getElementById('knowledge-upload')?.click()}
+                  data-testid="button-upload-knowledge"
+                >
+                  <Upload size={16} className="mr-2" />
+                  Upload Knowledge Articles
+                </Button>
+                {knowledgeFiles.length > 0 && (
+                  <div className="space-y-1 max-h-20 overflow-y-auto">
+                    {knowledgeFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
+                        <div className="flex items-center flex-1 min-w-0">
+                          <FileText size={12} className="mr-2 text-gray-500 flex-shrink-0" />
+                          <span className="truncate">{file.name}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 ml-2"
+                          onClick={() => removeKnowledgeFile(index)}
+                          data-testid={`button-remove-knowledge-${index}`}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Prompt */}

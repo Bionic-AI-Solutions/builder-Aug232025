@@ -33,7 +33,7 @@ export const mcpServers = pgTable("mcp_servers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
-  type: text("type").notNull().default("sse"), // sse, stdio, http, websocket, grpc
+  type: text("type").notNull().default("sse"), // sse, stdio, websocket, grpc
   url: text("url"),
   description: text("description"),
   status: text("status").notNull().default("disconnected"), // connected, disconnected
