@@ -469,49 +469,30 @@ export default function ChatDevelopment() {
               {/* Knowledge Attachments */}
               <div>
                 <Label className="text-sm font-medium">Knowledge Attachments</Label>
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".md,.txt,.pdf,.doc,.docx"
-                    onChange={handleKnowledgeUpload}
-                    className="hidden"
-                    id="knowledge-upload"
-                    data-testid="input-knowledge-upload"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => document.getElementById('knowledge-upload')?.click()}
-                    data-testid="button-upload-knowledge"
-                  >
-                    <Upload size={16} className="mr-2" />
-                    Upload Knowledge Articles
-                  </Button>
-                  {knowledgeFiles.length > 0 && (
-                    <div className="space-y-1 max-h-16 overflow-y-auto">
-                      {knowledgeFiles.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-1 bg-gray-50 rounded text-xs">
-                          <div className="flex items-center flex-1 min-w-0">
-                            <FileText size={10} className="mr-1 text-gray-500 flex-shrink-0" />
-                            <span className="truncate">{file.name}</span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-4 w-4 p-0 ml-1"
-                            onClick={() => removeKnowledgeFile(index)}
-                            data-testid={`button-remove-knowledge-${index}`}
-                          >
-                            ×
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="file"
+                  multiple
+                  accept=".md,.txt,.pdf,.doc,.docx"
+                  onChange={handleKnowledgeUpload}
+                  className="hidden"
+                  id="knowledge-upload"
+                  data-testid="input-knowledge-upload"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-10"
+                  onClick={() => document.getElementById('knowledge-upload')?.click()}
+                  data-testid="button-upload-knowledge"
+                >
+                  <Upload size={16} className="mr-2" />
+                  Upload Knowledge Articles
+                </Button>
+                {knowledgeFiles.length > 0 && (
+                  <div className="mt-1 text-xs text-gray-600">
+                    {knowledgeFiles.length} file{knowledgeFiles.length !== 1 ? 's' : ''} attached
+                  </div>
+                )}
               </div>
 
               {/* LLM Selection */}
