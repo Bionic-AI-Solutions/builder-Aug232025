@@ -31,7 +31,8 @@ import {
   Monitor,
   MessageSquare,
   FileText,
-  Upload
+  Upload,
+  Circle
 } from "lucide-react";
 
 export default function ChatDevelopment() {
@@ -450,148 +451,161 @@ export default function ChatDevelopment() {
       {/* App Configuration - Fixed at bottom */}
       <Card className="shadow-sm border border-gray-100">
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-            {/* App Name */}
-            <div className="lg:col-span-2">
-              <Label htmlFor="app-name">App Name</Label>
-              <Input
-                id="app-name"
-                value={appName}
-                onChange={(e) => setAppName(e.target.value)}
-                placeholder="Analytics Dashboard"
-                data-testid="input-app-name"
-              />
-            </div>
-
-            {/* Knowledge Attachments */}
-            <div className="lg:col-span-2">
-              <Label className="text-sm font-medium">Knowledge Attachments</Label>
-              <div className="space-y-2">
-                <input
-                  type="file"
-                  multiple
-                  accept=".md,.txt,.pdf,.doc,.docx"
-                  onChange={handleKnowledgeUpload}
-                  className="hidden"
-                  id="knowledge-upload"
-                  data-testid="input-knowledge-upload"
+          <div className="space-y-4">
+            {/* Top Row - App Name, Knowledge Attachments, LLM, MCP Servers */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* App Name */}
+              <div>
+                <Label htmlFor="app-name" className="text-sm font-medium">App Name</Label>
+                <Input
+                  id="app-name"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  placeholder="Analytics Dashboard"
+                  data-testid="input-app-name"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => document.getElementById('knowledge-upload')?.click()}
-                  data-testid="button-upload-knowledge"
-                >
-                  <Upload size={16} className="mr-2" />
-                  Upload Knowledge Articles
-                </Button>
-                {knowledgeFiles.length > 0 && (
-                  <div className="space-y-1 max-h-20 overflow-y-auto">
-                    {knowledgeFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
-                        <div className="flex items-center flex-1 min-w-0">
-                          <FileText size={12} className="mr-2 text-gray-500 flex-shrink-0" />
-                          <span className="truncate">{file.name}</span>
+              </div>
+
+              {/* Knowledge Attachments */}
+              <div>
+                <Label className="text-sm font-medium">Knowledge Attachments</Label>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    multiple
+                    accept=".md,.txt,.pdf,.doc,.docx"
+                    onChange={handleKnowledgeUpload}
+                    className="hidden"
+                    id="knowledge-upload"
+                    data-testid="input-knowledge-upload"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => document.getElementById('knowledge-upload')?.click()}
+                    data-testid="button-upload-knowledge"
+                  >
+                    <Upload size={16} className="mr-2" />
+                    Upload Knowledge Articles
+                  </Button>
+                  {knowledgeFiles.length > 0 && (
+                    <div className="space-y-1 max-h-16 overflow-y-auto">
+                      {knowledgeFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-1 bg-gray-50 rounded text-xs">
+                          <div className="flex items-center flex-1 min-w-0">
+                            <FileText size={10} className="mr-1 text-gray-500 flex-shrink-0" />
+                            <span className="truncate">{file.name}</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 ml-1"
+                            onClick={() => removeKnowledgeFile(index)}
+                            data-testid={`button-remove-knowledge-${index}`}
+                          >
+                            ×
+                          </Button>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 ml-2"
-                          onClick={() => removeKnowledgeFile(index)}
-                          data-testid={`button-remove-knowledge-${index}`}
-                        >
-                          ×
-                        </Button>
-                      </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* LLM Selection */}
+              <div>
+                <Label className="text-sm font-medium">LLM</Label>
+                <Select value={selectedLLM} onValueChange={setSelectedLLM}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select LLM" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {llmOptions.map((llm) => (
+                      <SelectItem key={llm.value} value={llm.value}>
+                        <div className="flex items-center space-x-2">
+                          <Circle 
+                            size={12} 
+                            className={selectedLLM === llm.value ? "text-blue-600 fill-blue-600" : "text-gray-300"} 
+                          />
+                          <span>{llm.label}</span>
+                        </div>
+                      </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* MCP Servers */}
+              <div>
+                <Label className="text-sm font-medium">MCP Servers</Label>
+                <Select onValueChange={(value) => toggleServer(value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={`${selectedServers.length} selected`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {servers.map((server) => (
+                      <SelectItem key={server.id} value={server.id}>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            checked={selectedServers.includes(server.id)}
+                            className="h-4 w-4"
+                          />
+                          <span>{server.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedServers.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedServers.map((serverId) => {
+                      const server = servers.find(s => s.id === serverId);
+                      return server ? (
+                        <Badge key={serverId} variant="secondary" className="text-xs">
+                          {server.name}
+                        </Badge>
+                      ) : null;
+                    })}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Prompt */}
-            <div className="lg:col-span-4">
-              <Label htmlFor="main-prompt">Prompt</Label>
-              <Textarea
-                id="main-prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                rows={2}
-                placeholder="Create a comprehensive user analytics dashboard..."
-                data-testid="textarea-main-prompt"
-              />
-            </div>
+            {/* Bottom Row - Prompt and Save Button */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+              {/* Prompt */}
+              <div className="lg:col-span-10">
+                <Label htmlFor="main-prompt" className="text-sm font-medium">Prompt</Label>
+                <Textarea
+                  id="main-prompt"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={3}
+                  placeholder="Create a comprehensive user analytics dashboard..."
+                  data-testid="textarea-main-prompt"
+                />
+              </div>
 
-            {/* LLM Selection */}
-            <div className="lg:col-span-2">
-              <Label className="text-sm font-medium">LLM</Label>
-              <Select value={selectedLLM} onValueChange={setSelectedLLM}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select LLM" />
-                </SelectTrigger>
-                <SelectContent>
-                  {llmOptions.map((llm) => (
-                    <SelectItem key={llm.value} value={llm.value}>
-                      {llm.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* MCP Servers */}
-            <div className="lg:col-span-2">
-              <Label className="text-sm font-medium">MCP Servers</Label>
-              <Select onValueChange={(value) => toggleServer(value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={`${selectedServers.length} selected`} />
-                </SelectTrigger>
-                <SelectContent>
-                  {servers.map((server) => (
-                    <SelectItem key={server.id} value={server.id}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{server.name}</span>
-                        {selectedServers.includes(server.id) && (
-                          <CheckCircle size={14} className="text-green-600" />
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedServers.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {selectedServers.map((serverId) => {
-                    const server = servers.find(s => s.id === serverId);
-                    return server ? (
-                      <Badge key={serverId} variant="secondary" className="text-xs">
-                        {server.name}
-                      </Badge>
-                    ) : null;
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Save Button */}
-            <div className="lg:col-span-2">
-              <Button
-                onClick={handleSaveApp}
-                disabled={createProjectMutation.isPending || buildProgress === "building"}
-                className="w-full"
-                data-testid="button-save-app"
-              >
-                {buildProgress === "building" ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Building...
-                  </>
-                ) : (
-                  "Save App"
-                )}
-              </Button>
+              {/* Save Button */}
+              <div className="lg:col-span-2">
+                <Button
+                  onClick={handleSaveApp}
+                  disabled={createProjectMutation.isPending || buildProgress === "building"}
+                  className="w-full"
+                  data-testid="button-save-app"
+                >
+                  {buildProgress === "building" ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Building...
+                    </>
+                  ) : (
+                    "Save App"
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
