@@ -3,31 +3,78 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Box, Mail, Lock, Chrome, Github } from "lucide-react";
+import { Box, Mail, Lock, Chrome, Github, Crown, Package, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+// Demo users for different personas
+const demoUsers = {
+  super_admin: {
+    email: "admin@mcpbuilder.com",
+    password: "admin123",
+    name: "Super Admin",
+    persona: "super_admin",
+  },
+  builder: {
+    email: "builder@mcpbuilder.com",
+    password: "builder123",
+    name: "John Builder",
+    persona: "builder",
+  },
+  end_user: {
+    email: "user@mcpbuilder.com",
+    password: "user123",
+    name: "Jane User",
+    persona: "end_user",
+  },
+};
+
 export default function LoginPage() {
   const [email, setEmail] = useState("demo@mcpbuilder.com");
   const [password, setPassword] = useState("demo123");
+  const [selectedPersona, setSelectedPersona] = useState<keyof typeof demoUsers>('builder');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
+
+  const handlePersonaSelect = (persona: keyof typeof demoUsers) => {
+    setSelectedPersona(persona);
+    const user = demoUsers[persona];
+    setEmail(user.email);
+    setPassword(user.password);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await apiRequest("POST", "/api/auth/login", { email, password });
-      const data = await response.json();
+      // For demo purposes, we'll simulate a login with the selected persona
+      const user = demoUsers[selectedPersona];
       
-      login(data.user);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create a mock user object with the selected persona
+      const mockUser = {
+        id: `user-${selectedPersona}`,
+        username: user.name.toLowerCase().replace(' ', '_'),
+        email: user.email,
+        name: user.name,
+        persona: user.persona,
+        plan: "pro",
+        roles: [user.persona],
+        permissions: [],
+        metadata: {},
+        createdAt: new Date().toISOString(),
+      };
+      
+      login(mockUser);
       
       toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
+        title: `Welcome, ${user.name}!`,
+        description: `Logged in as ${user.persona.replace('_', ' ')}.`,
       });
     } catch (error) {
       toast({
@@ -50,6 +97,59 @@ export default function LoginPage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900">MCP Builder</h1>
             <p className="text-gray-600 mt-2">Build AI apps with conversation</p>
+          </div>
+
+          {/* Persona Selection */}
+          <div className="mb-6">
+            <Label className="block text-sm font-medium text-gray-700 mb-3">
+              Choose Demo Persona
+            </Label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handlePersonaSelect('super_admin')}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  selectedPersona === 'super_admin'
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <Crown className={`w-6 h-6 mx-auto mb-2 ${
+                  selectedPersona === 'super_admin' ? 'text-purple-600' : 'text-gray-400'
+                }`} />
+                <div className="text-xs font-medium">Super Admin</div>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => handlePersonaSelect('builder')}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  selectedPersona === 'builder'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <Package className={`w-6 h-6 mx-auto mb-2 ${
+                  selectedPersona === 'builder' ? 'text-blue-600' : 'text-gray-400'
+                }`} />
+                <div className="text-xs font-medium">Builder</div>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => handlePersonaSelect('end_user')}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  selectedPersona === 'end_user'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <Users className={`w-6 h-6 mx-auto mb-2 ${
+                  selectedPersona === 'end_user' ? 'text-green-600' : 'text-gray-400'
+                }`} />
+                <div className="text-xs font-medium">End User</div>
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -97,7 +197,7 @@ export default function LoginPage() {
               disabled={isLoading}
               data-testid="button-login"
             >
-              {isLoading ? "Signing In..." : "Sign In"}
+              {isLoading ? "Signing In..." : `Sign In as ${demoUsers[selectedPersona].name}`}
             </Button>
 
             <div className="text-center">

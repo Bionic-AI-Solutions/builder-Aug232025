@@ -10,6 +10,10 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   plan: text("plan").notNull().default("free"),
+  persona: text("persona").notNull().default("builder"), // super_admin, builder, end_user
+  roles: jsonb("roles").$type<string[]>().default([]),
+  permissions: jsonb("permissions").$type<string[]>().default([]),
+  metadata: jsonb("metadata").default({}),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -62,6 +66,57 @@ export const marketplaceApps = pgTable("marketplace_apps", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// New tables for enhanced personas
+export const widgetImplementations = pgTable("widget_implementations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  endUserId: varchar("end_user_id").notNull().references(() => users.id),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
+  builderId: varchar("builder_id").notNull().references(() => users.id),
+  implementationUrl: text("implementation_url").notNull(),
+  embedCode: text("embed_code").notNull(),
+  configuration: jsonb("configuration").default({}),
+  status: text("status").notNull().default("active"), // active, inactive, suspended
+  usageCount: integer("usage_count").default(0),
+  revenueGenerated: integer("revenue_generated").default(0), // in cents
+  lastActivity: timestamp("last_activity"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const revenueEvents = pgTable("revenue_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  implementationId: varchar("implementation_id").references(() => widgetImplementations.id),
+  builderId: varchar("builder_id").notNull().references(() => users.id),
+  endUserId: varchar("end_user_id").notNull().references(() => users.id),
+  amount: integer("amount").notNull(), // in cents
+  eventType: text("event_type").notNull(), // purchase, usage, subscription
+  description: text("description"),
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const templatePurchases = pgTable("template_purchases", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  buyerId: varchar("buyer_id").notNull().references(() => users.id),
+  templateProjectId: varchar("template_project_id").notNull().references(() => projects.id),
+  sellerId: varchar("seller_id").notNull().references(() => users.id),
+  purchaseAmount: integer("purchase_amount").notNull(), // in cents
+  purchaseDate: timestamp("purchase_date").defaultNow(),
+  status: text("status").notNull().default("completed"), // completed, pending, failed
+  metadata: jsonb("metadata").default({}),
+});
+
+export const usageEvents = pgTable("usage_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  implementationId: varchar("implementation_id").notNull().references(() => widgetImplementations.id),
+  eventType: text("event_type").notNull(), // load, interaction, error
+  eventData: jsonb("event_data").default({}),
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+  sessionId: varchar("session_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -88,6 +143,27 @@ export const insertMarketplaceAppSchema = createInsertSchema(marketplaceApps).om
   createdAt: true,
 });
 
+export const insertWidgetImplementationSchema = createInsertSchema(widgetImplementations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRevenueEventSchema = createInsertSchema(revenueEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTemplatePurchaseSchema = createInsertSchema(templatePurchases).omit({
+  id: true,
+  purchaseDate: true,
+});
+
+export const insertUsageEventSchema = createInsertSchema(usageEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -103,3 +179,15 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
 export type MarketplaceApp = typeof marketplaceApps.$inferSelect;
 export type InsertMarketplaceApp = z.infer<typeof insertMarketplaceAppSchema>;
+
+export type WidgetImplementation = typeof widgetImplementations.$inferSelect;
+export type InsertWidgetImplementation = z.infer<typeof insertWidgetImplementationSchema>;
+
+export type RevenueEvent = typeof revenueEvents.$inferSelect;
+export type InsertRevenueEvent = z.infer<typeof insertRevenueEventSchema>;
+
+export type TemplatePurchase = typeof templatePurchases.$inferSelect;
+export type InsertTemplatePurchase = z.infer<typeof insertTemplatePurchaseSchema>;
+
+export type UsageEvent = typeof usageEvents.$inferSelect;
+export type InsertUsageEvent = z.infer<typeof insertUsageEventSchema>;
