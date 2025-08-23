@@ -2,14 +2,14 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { PersonaSelector } from "@/components/ui/persona-selector";
-import { 
-  BarChart3, 
-  MessageCircle, 
-  Folder, 
-  Server, 
-  Store, 
-  TrendingUp, 
-  CreditCard, 
+import {
+  BarChart3,
+  MessageCircle,
+  Folder,
+  Server,
+  Store,
+  TrendingUp,
+  CreditCard,
   Settings,
   Box,
   Package,
@@ -23,7 +23,7 @@ const getNavigation = (persona: string) => {
     { name: "Dashboard", href: "/dashboard", icon: BarChart3, personas: ['super_admin', 'builder', 'end_user'] },
     { name: "Marketplace", href: "/marketplace", icon: Store, personas: ['super_admin', 'builder', 'end_user'] },
     { name: "Analytics", href: "/analytics", icon: TrendingUp, personas: ['super_admin', 'builder', 'end_user'] },
-    { name: "Billing", href: "/billing", icon: CreditCard, personas: ['super_admin', 'builder', 'end_user'] },
+    { name: "Billing", href: "/billing", icon: CreditCard, personas: ['builder', 'end_user'] }, // Removed super_admin
   ];
 
   const builderNavigation = [
@@ -39,7 +39,6 @@ const getNavigation = (persona: string) => {
 
   const adminNavigation = [
     { name: "Admin", href: "/admin", icon: Settings, personas: ['super_admin'] },
-    { name: "User Management", href: "/admin/users", icon: Users, personas: ['super_admin'] },
   ];
 
   const allNavigation = [
@@ -87,7 +86,7 @@ export default function Sidebar() {
         {navigation.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href || (location === "/" && item.href === "/dashboard");
-          
+
           return (
             <Link key={item.name} href={item.href}>
               <div
