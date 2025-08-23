@@ -4,16 +4,21 @@ import { storage } from "./storage";
 import { insertUserSchema, insertProjectSchema, insertMcpServerSchema, insertChatMessageSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // Auth routes
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
       const user = await storage.getUserByEmail(email);
-      
+
       if (!user || user.password !== password) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
-      
+
       res.json({ user: { ...user, password: undefined } });
     } catch (error) {
       res.status(500).json({ error: "Login failed" });
@@ -149,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertChatMessageSchema.parse(req.body);
       const message = await storage.createChatMessage(validatedData);
-      
+
       // Simulate AI response for user messages
       if (validatedData.sender === "user") {
         setTimeout(async () => {
@@ -159,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "Perfect! I'll design an application that meets your needs. Let me recommend the optimal tech stack and MCP server configuration for this project.",
             "I can create a app for you that tracks user analytics. Let me understand your requirements:\n\n**What specific metrics do you want to track?**\n• Real-time engagement metrics and revenue tracking\n• User activity, engagement rates, revenue visualization\n• Conversion analysis and funnel metrics\n• Performance benchmarks and growth indicators\n\nShall I start building the dashboard structure with these features?"
           ];
-          
+
           const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
           await storage.createChatMessage({
             userId: validatedData.userId,
@@ -168,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }, 1000);
       }
-      
+
       res.status(201).json(message);
     } catch (error) {
       res.status(400).json({ error: "Invalid message data" });
@@ -191,15 +196,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updates = req.body;
-      
+
       // Remove sensitive fields that shouldn't be updated via admin panel
       const { password, ...safeUpdates } = updates;
-      
+
       const updatedUser = await storage.updateUser(id, safeUpdates);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
-      
+
       res.json({ ...updatedUser, password: undefined });
     } catch (error) {
       res.status(500).json({ error: "Failed to update user" });
@@ -209,17 +214,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/users/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       // Prevent deletion of demo user
       if (id === "demo-user-id") {
         return res.status(403).json({ error: "Cannot delete demo user" });
       }
-      
+
       const success = await storage.deleteUser(id);
       if (!success) {
         return res.status(404).json({ error: "User not found" });
       }
-      
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete user" });

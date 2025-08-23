@@ -9,24 +9,24 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
-  
+
   // Projects
   getProjects(userId: string): Promise<Project[]>;
   getProject(id: string): Promise<Project | undefined>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined>;
-  
+
   // MCP Servers
   getMcpServers(userId: string): Promise<McpServer[]>;
   getMcpServer(id: string): Promise<McpServer | undefined>;
   createMcpServer(server: InsertMcpServer): Promise<McpServer>;
   updateMcpServer(id: string, updates: Partial<McpServer>): Promise<McpServer | undefined>;
   deleteMcpServer(id: string): Promise<boolean>;
-  
+
   // Chat Messages
   getChatMessages(userId: string): Promise<ChatMessage[]>;
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
-  
+
   // Marketplace Apps
   getMarketplaceApps(): Promise<MarketplaceApp[]>;
   getMarketplaceApp(id: string): Promise<MarketplaceApp | undefined>;
@@ -301,11 +301,11 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { 
-      ...insertUser, 
-      id, 
+    const user: User = {
+      ...insertUser,
+      id,
       plan: insertUser.plan || "free",
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.users.set(id, user);
     return user;
@@ -314,7 +314,7 @@ export class MemStorage implements IStorage {
   async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
     const user = this.users.get(id);
     if (!user) return undefined;
-    
+
     const updatedUser = { ...user, ...updates };
     this.users.set(id, updatedUser);
     return updatedUser;
@@ -335,17 +335,17 @@ export class MemStorage implements IStorage {
 
   async createProject(insertProject: InsertProject): Promise<Project> {
     const id = randomUUID();
-    const project: Project = { 
-      ...insertProject, 
-      id, 
+    const project: Project = {
+      ...insertProject,
+      id,
       description: insertProject.description || null,
       status: insertProject.status || "development",
-      mcpServers: Array.isArray(insertProject.mcpServers) ? insertProject.mcpServers : [],
-      files: Array.isArray(insertProject.files) ? insertProject.files : [],
+      mcpServers: Array.isArray(insertProject.mcpServers) ? insertProject.mcpServers as string[] : [],
+      files: Array.isArray(insertProject.files) ? insertProject.files as { name: string; size: string; type: string; }[] : [],
       revenue: insertProject.revenue || 0,
       revenueGrowth: insertProject.revenueGrowth || 0,
       published: insertProject.published || "false",
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.projects.set(id, project);
     return project;
@@ -354,7 +354,7 @@ export class MemStorage implements IStorage {
   async updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined> {
     const project = this.projects.get(id);
     if (!project) return undefined;
-    
+
     const updatedProject = { ...project, ...updates };
     this.projects.set(id, updatedProject);
     return updatedProject;
@@ -371,15 +371,15 @@ export class MemStorage implements IStorage {
 
   async createMcpServer(insertServer: InsertMcpServer): Promise<McpServer> {
     const id = randomUUID();
-    const server: McpServer = { 
-      ...insertServer, 
-      id, 
+    const server: McpServer = {
+      ...insertServer,
+      id,
       type: insertServer.type || "sse",
       url: insertServer.url || null,
       description: insertServer.description || null,
       status: insertServer.status || "disconnected",
       latency: insertServer.latency || 0,
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.mcpServers.set(id, server);
     return server;
@@ -388,7 +388,7 @@ export class MemStorage implements IStorage {
   async updateMcpServer(id: string, updates: Partial<McpServer>): Promise<McpServer | undefined> {
     const server = this.mcpServers.get(id);
     if (!server) return undefined;
-    
+
     const updatedServer = { ...server, ...updates };
     this.mcpServers.set(id, updatedServer);
     return updatedServer;
@@ -407,10 +407,10 @@ export class MemStorage implements IStorage {
 
   async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
     const id = randomUUID();
-    const message: ChatMessage = { 
-      ...insertMessage, 
-      id, 
-      createdAt: new Date() 
+    const message: ChatMessage = {
+      ...insertMessage,
+      id,
+      createdAt: new Date()
     };
     this.chatMessages.set(id, message);
     return message;
@@ -427,15 +427,15 @@ export class MemStorage implements IStorage {
 
   async createMarketplaceApp(insertApp: InsertMarketplaceApp): Promise<MarketplaceApp> {
     const id = randomUUID();
-    const app: MarketplaceApp = { 
-      ...insertApp, 
-      id, 
+    const app: MarketplaceApp = {
+      ...insertApp,
+      id,
       description: insertApp.description || null,
       rating: insertApp.rating || "0",
       downloads: insertApp.downloads || 0,
       category: insertApp.category || "custom",
       icon: insertApp.icon || "🔧",
-      createdAt: new Date() 
+      createdAt: new Date()
     };
     this.marketplaceApps.set(id, app);
     return app;

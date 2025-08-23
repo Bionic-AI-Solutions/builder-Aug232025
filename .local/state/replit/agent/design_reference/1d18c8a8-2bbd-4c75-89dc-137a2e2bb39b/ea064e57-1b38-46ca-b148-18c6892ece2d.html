@@ -1,0 +1,1413 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Builder - AI Application Development Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        'brand-blue': '#3B82F6',
+                        'brand-emerald': '#10B981',
+                        'brand-amber': '#F59E0B',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- @COMPONENT: LoginPage -->
+    <div id="loginPage" class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-cube text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">MCP Builder</h1>
+                <p class="text-gray-600 mt-2">Build AI apps with conversation</p>
+            </div>
+
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="loginEmail" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="demo@mcpbuilder.com" value="demo@mcpbuilder.com">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="••••••••" value="demo123">
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all">
+                    Sign In
+                </button>
+
+                <div class="text-center">
+                    <p class="text-gray-500 mb-4">Or continue with</p>
+                    <div class="flex space-x-4">
+                        <button type="button" class="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i class="fab fa-google text-red-500"></i> Google
+                        </button>
+                        <button type="button" class="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i class="fab fa-github"></i> GitHub
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: LoginPage -->
+
+    <!-- @COMPONENT: MainApp -->
+    <div id="mainApp" class="hidden min-h-screen bg-gray-50">
+        <!-- @COMPONENT: Sidebar -->
+        <div class="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white">
+            <div class="p-6 border-b border-slate-700">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-500 w-10 h-10 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-cube text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg">MCP Builder</h1>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-2">
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors" data-page="dashboard">
+                    <i class="fas fa-chart-pie w-5"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors" data-page="chat">
+                    <i class="fas fa-comments w-5"></i>
+                    <span>Chat Development</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors" data-page="projects">
+                    <i class="fas fa-folder w-5"></i>
+                    <span>Projects</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors" data-page="servers">
+                    <i class="fas fa-server w-5"></i>
+                    <span>MCP Servers</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors" data-page="marketplace">
+                    <i class="fas fa-store w-5"></i>
+                    <span>Marketplace</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors" data-page="analytics">
+                    <i class="fas fa-chart-line w-5"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors" data-page="billing">
+                    <i class="fas fa-credit-card w-5"></i>
+                    <span>Billing</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors" data-page="admin">
+                    <i class="fas fa-cog w-5"></i>
+                    <span>Admin</span>
+                </a>
+            </nav>
+        </div>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- @COMPONENT: MainContent -->
+        <div class="ml-64">
+            <!-- @COMPONENT: Header -->
+            <header class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h1 id="pageTitle" class="text-2xl font-bold text-gray-900">Dashboard</h1>
+                    <div class="flex items-center space-x-4">
+                        <button class="p-2 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-xl"></i>
+                        </button>
+                        <div class="flex items-center space-x-3">
+                            <div class="text-right">
+                                <p class="text-sm font-medium text-gray-900" data-bind="user.name">Sarah Johnson</p>
+                                <p class="text-xs text-gray-500">Professional Plan</p>
+                            </div>
+                            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                SJ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <!-- @END_COMPONENT: Header -->
+
+            <!-- @COMPONENT: PageContent -->
+            <main class="p-6">
+                <!-- @COMPONENT: DashboardPage -->
+                <div id="dashboardPage" class="page-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Generated Apps</p>
+                                    <p class="text-3xl font-bold text-gray-900" data-bind="metrics.apps">12</p>
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-full">
+                                    <i class="fas fa-mobile-alt text-blue-600"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Active Projects</p>
+                                    <p class="text-3xl font-bold text-gray-900" data-bind="metrics.activeProjects">5</p>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-full">
+                                    <i class="fas fa-project-diagram text-green-600"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">MCP Connections</p>
+                                    <p class="text-3xl font-bold text-gray-900" data-bind="metrics.mcpConnections">8</p>
+                                </div>
+                                <div class="bg-purple-100 p-3 rounded-full">
+                                    <i class="fas fa-network-wired text-purple-600"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Marketplace Apps</p>
+                                    <p class="text-3xl font-bold text-gray-900" data-bind="metrics.marketplaceApps">3</p>
+                                </div>
+                                <div class="bg-orange-100 p-3 rounded-full">
+                                    <i class="fas fa-store text-orange-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-900 mb-6">Recent Projects</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" data-mock="true">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-semibold text-gray-900">Restaurant App</h3>
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">✅ Completed</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3">Generated: 2024-12-18</p>
+                                <p class="text-sm text-gray-600 mb-4">LLM: Claude 3.7</p>
+                                <div class="flex space-x-2">
+                                    <button class="bg-blue-50 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-100">View</button>
+                                    <button class="bg-gray-50 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-100">Chat</button>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" data-mock="true">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-semibold text-gray-900">Customer Support</h3>
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">🔄 Testing</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3">Generated: 2024-12-17</p>
+                                <p class="text-sm text-gray-600 mb-4">LLM: Gemini Pro</p>
+                                <div class="flex space-x-2">
+                                    <button class="bg-blue-50 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-100">View</button>
+                                    <button class="bg-gray-50 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-100">Chat</button>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" data-mock="true">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-semibold text-gray-900">Tour Guide</h3>
+                                    <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">🔄 Development</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3">Generated: 2024-12-16</p>
+                                <p class="text-sm text-gray-600 mb-4">LLM: LLaMA 3.3</p>
+                                <div class="flex space-x-2">
+                                    <button class="bg-blue-50 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-100">View</button>
+                                    <button class="bg-gray-50 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-100">Chat</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: DashboardPage -->
+
+                <!-- @COMPONENT: ChatDevelopmentPage -->
+                <div id="chatPage" class="page-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                        <!-- Main Chat Area -->
+                        <div class="lg:col-span-2 space-y-6">
+                            <!-- Chat Messages Container -->
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 h-96 overflow-y-auto">
+                                <div id="chatMessages" class="p-6 space-y-4">
+                                    <div class="flex items-start space-x-3" data-mock="true">
+                                        <div class="bg-gray-200 rounded-full p-2">
+                                            <i class="fas fa-user text-gray-600"></i>
+                                        </div>
+                                        <div class="bg-gray-100 rounded-lg p-3 max-w-md">
+                                            <p class="text-gray-800">I want to create a comprehensive user analytics dashboard. Can you help me build this?</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start space-x-3" data-mock="true">
+                                        <div class="bg-blue-500 rounded-full p-2">
+                                            <i class="fas fa-robot text-white"></i>
+                                        </div>
+                                        <div class="bg-blue-50 rounded-lg p-3 max-w-2xl">
+                                            <p class="text-gray-800 mb-3">I'll help you create a comprehensive user analytics dashboard. Let me understand your requirements:</p>
+                                            <p class="text-gray-800 mb-2"><strong>What specific metrics do you want to track?</strong></p>
+                                            <ul class="list-disc list-inside text-gray-700 space-y-1 mb-3">
+                                                <li>Real-time engagement metrics and revenue tracking</li>
+                                                <li>User activity, engagement rates, revenue visualization</li>
+                                                <li>Conversion analysis and funnel metrics</li>
+                                                <li>Performance benchmarks and growth indicators</li>
+                                            </ul>
+                                            <p class="text-gray-800">Shall I start building the dashboard structure with these features?</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Chat Input Bar -->
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                                <div class="flex items-center space-x-3">
+                                    <input type="text" id="chatInput" placeholder="Ask AI to generate a persona prompt for your agent" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <button id="transferBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg font-medium whitespace-nowrap">
+                                        Transfer left ready prompt
+                                    </button>
+                                    <button class="p-3 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg">
+                                        🎤
+                                    </button>
+                                    <select class="px-3 py-3 border border-gray-300 rounded-lg">
+                                        <option>GPT-4o</option>
+                                        <option>Claude 3.7</option>
+                                        <option>Gemini Pro</option>
+                                    </select>
+                                    <button class="p-3 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg">
+                                        📎
+                                    </button>
+                                    <button id="sendChatBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium">
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- App Configuration Section -->
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
+                                <!-- App Name & Knowledge Attachments -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">App Name</label>
+                                        <input type="text" id="appName" placeholder="Analytics Dashboard" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Knowledge Attachments</label>
+                                        <button class="w-full px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">
+                                            Browse Files
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Prompt Area -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Prompt</label>
+                                    <textarea id="mainPrompt" rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Create a comprehensive user analytics dashboard that tracks real-time engagement metrics, revenue data, user activity patterns, and conversion analysis with interactive visualizations..."></textarea>
+                                </div>
+
+                                <!-- LLM & MCP Servers Selection -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-3">LLM</label>
+                                        <div class="space-y-2">
+                                            <label class="flex items-center">
+                                                <input type="radio" name="llm" value="claude" class="mr-3">
+                                                <span>Claude 3.7</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="radio" name="llm" value="gemini" class="mr-3">
+                                                <span>Gemini Pro</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="radio" name="llm" value="llama" checked class="mr-3">
+                                                <span>LLaMA 3.3</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="radio" name="llm" value="gpt4" class="mr-3">
+                                                <span>GPT-4</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-3">MCP Servers</label>
+                                        <div class="space-y-2">
+                                            <label class="flex items-center">
+                                                <input type="checkbox" value="database" checked class="mr-3">
+                                                <span>Database</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" value="api" checked class="mr-3">
+                                                <span>API Gateway</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" value="auth" class="mr-3">
+                                                <span>Authentication</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" value="payment" checked class="mr-3">
+                                                <span>Payment</span>
+                                            </label>
+                                            <label class="flex items-center">
+                                                <input type="checkbox" value="email" class="mr-3">
+                                                <span>Email Service</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Save App Button -->
+                                <div class="text-center">
+                                    <button id="saveAppBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium text-lg">
+                                        Save App
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel - Live Preview -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-full">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-6">Live Preview</h3>
+                                
+                                <div id="livePreview" class="space-y-6">
+                                    <div class="text-center">
+                                        <div class="text-4xl mb-4">🚀</div>
+                                        <h4 class="font-semibold text-gray-900 mb-2">Building your application...</h4>
+                                        <p class="text-gray-600 text-sm">Processing your request</p>
+                                    </div>
+
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900 mb-3">Build Progress</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex items-center text-green-600">
+                                                <span class="mr-2">✅</span>
+                                                <span class="text-sm">Project Setup</span>
+                                            </div>
+                                            <div class="flex items-center text-green-600">
+                                                <span class="mr-2">✅</span>
+                                                <span class="text-sm">Database</span>
+                                            </div>
+                                            <div class="flex items-center text-blue-600">
+                                                <span class="mr-2">🔄</span>
+                                                <span class="text-sm">UI Components</span>
+                                            </div>
+                                            <div class="flex items-center text-gray-400">
+                                                <span class="mr-2">⏳</span>
+                                                <span class="text-sm">Authentication</span>
+                                            </div>
+                                            <div class="flex items-center text-gray-400">
+                                                <span class="mr-2">⏳</span>
+                                                <span class="text-sm">Deployment</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <p class="text-sm text-gray-600">
+                                            This is the last line of the App selected from above list
+                                        </p>
+                                    </div>
+
+                                    <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm">
+                                        Multi Select
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ChatDevelopmentPage -->
+
+                <!-- @COMPONENT: ProjectsPage -->
+                <div id="projectsPage" class="page-content hidden">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-2xl font-bold text-gray-900">Projects</h2>
+                            <div class="text-sm text-gray-600">
+                                Total: <span data-bind="projects.total">3</span> | Completed: <span data-bind="projects.completed">1</span> | In Development: <span data-bind="projects.inDev">2</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- @MAP: projects.map(project => ( -->
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Restaurant App</h3>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">✅ Completed</span>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <p class="text-sm text-gray-600">Generated: 2024-12-18</p>
+                                <p class="text-sm text-gray-600">LLM: Claude 3.7</p>
+                                <p class="text-sm text-gray-600">Files: 4 files (19.4kb)</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm hover:bg-blue-100" data-event="click:viewProject">View</button>
+                                <button class="bg-gray-50 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-100" data-event="click:chatWithApp">Chat</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Customer Support</h3>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">🔄 Testing</span>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <p class="text-sm text-gray-600">Generated: 2024-12-17</p>
+                                <p class="text-sm text-gray-600">LLM: Gemini Pro</p>
+                                <p class="text-sm text-gray-600">Files: 6 files (28.1kb)</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm hover:bg-blue-100" data-event="click:viewProject">View</button>
+                                <button class="bg-gray-50 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-100" data-event="click:chatWithApp">Chat</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Tour Guide</h3>
+                                <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">🔄 Development</span>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <p class="text-sm text-gray-600">Generated: 2024-12-16</p>
+                                <p class="text-sm text-gray-600">LLM: LLaMA 3.3</p>
+                                <p class="text-sm text-gray-600">Files: 3 files (15.7kb)</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm hover:bg-blue-100" data-event="click:viewProject">View</button>
+                                <button class="bg-gray-50 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-100" data-event="click:chatWithApp">Chat</button>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ProjectsPage -->
+
+                <!-- @COMPONENT: MCPServersPage -->
+                <div id="serversPage" class="page-content hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">MCP Servers</h2>
+                        <button id="addServerBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            Add New Server
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Database MCP</h3>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600">Connected</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <p class="text-sm text-gray-600">Latency: 45ms</p>
+                                <p class="text-sm text-gray-600">Type: SSE Events</p>
+                                <p class="text-sm text-gray-600">Real-time DB connections</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Disconnect</button>
+                                <button class="bg-blue-50 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-100">Refresh</button>
+                                <button class="bg-gray-50 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-100">Configure</button>
+                                <button class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Delete</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">API Gateway</h3>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600">Connected</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <p class="text-sm text-gray-600">Latency: 32ms</p>
+                                <p class="text-sm text-gray-600">Type: SSE Events</p>
+                                <p class="text-sm text-gray-600">REST & GraphQL integrations</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Disconnect</button>
+                                <button class="bg-blue-50 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-100">Refresh</button>
+                                <button class="bg-gray-50 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-100">Configure</button>
+                                <button class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Delete</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Auth MCP</h3>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600">Connected</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <p class="text-sm text-gray-600">Latency: 28ms</p>
+                                <p class="text-sm text-gray-600">Type: Stdio</p>
+                                <p class="text-sm text-gray-600">User auth & authorization</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Disconnect</button>
+                                <button class="bg-blue-50 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-100">Refresh</button>
+                                <button class="bg-gray-50 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-100">Configure</button>
+                                <button class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Delete</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100" data-mock="true">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Payment MCP</h3>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600">Connected</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <p class="text-sm text-gray-600">Latency: 55ms</p>
+                                <p class="text-sm text-gray-600">Type: HTTP</p>
+                                <p class="text-sm text-gray-600">Payment processing</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Disconnect</button>
+                                <button class="bg-blue-50 text-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-100">Refresh</button>
+                                <button class="bg-gray-50 text-gray-600 px-3 py-1 rounded text-sm hover:bg-gray-100">Configure</button>
+                                <button class="bg-red-50 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-100">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: MCPServersPage -->
+
+                <!-- @COMPONENT: MarketplacePage -->
+                <div id="marketplacePage" class="page-content hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">Marketplace</h2>
+                        <div class="flex items-center space-x-4">
+                            <input type="text" placeholder="Search apps..." class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">All</button>
+                                <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Business</button>
+                                <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Content</button>
+                                <button class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Service</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="text-center mb-4">
+                                <div class="text-4xl mb-2">⚡</div>
+                                <h3 class="text-lg font-semibold text-gray-900">E-commerce Store</h3>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl font-bold text-gray-900">$49</span>
+                                    <div class="flex items-center">
+                                        <span class="text-yellow-500">⭐</span>
+                                        <span class="text-sm text-gray-600 ml-1">4.8</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600">1.2K Downloads</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700">Install</button>
+                                <button class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-200">Details</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="text-center mb-4">
+                                <div class="text-4xl mb-2">📊</div>
+                                <h3 class="text-lg font-semibold text-gray-900">Blog Platform</h3>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl font-bold text-gray-900">$29</span>
+                                    <div class="flex items-center">
+                                        <span class="text-yellow-500">⭐</span>
+                                        <span class="text-sm text-gray-600 ml-1">4.6</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600">890 Downloads</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700">Install</button>
+                                <button class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-200">Details</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="text-center mb-4">
+                                <div class="text-4xl mb-2">💬</div>
+                                <h3 class="text-lg font-semibold text-gray-900">Booking System</h3>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl font-bold text-gray-900">$39</span>
+                                    <div class="flex items-center">
+                                        <span class="text-yellow-500">⭐</span>
+                                        <span class="text-sm text-gray-600 ml-1">4.9</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600">2.1K Downloads</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700">Install</button>
+                                <button class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-200">Details</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="text-center mb-4">
+                                <div class="text-4xl mb-2">🍕</div>
+                                <h3 class="text-lg font-semibold text-gray-900">Restaurant App</h3>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl font-bold text-gray-900">$35</span>
+                                    <div class="flex items-center">
+                                        <span class="text-yellow-500">⭐</span>
+                                        <span class="text-sm text-gray-600 ml-1">4.7</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600">Custom</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700">Install</button>
+                                <button class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-200">Details</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="text-center mb-4">
+                                <div class="text-4xl mb-2">🎫</div>
+                                <h3 class="text-lg font-semibold text-gray-900">Support System</h3>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl font-bold text-gray-900">$42</span>
+                                    <div class="flex items-center">
+                                        <span class="text-yellow-500">⭐</span>
+                                        <span class="text-sm text-gray-600 ml-1">4.9</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600">Custom</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700">Install</button>
+                                <button class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-200">Details</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow" data-mock="true">
+                            <div class="text-center mb-4">
+                                <div class="text-4xl mb-2">📍</div>
+                                <h3 class="text-lg font-semibold text-gray-900">Tour Guide</h3>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl font-bold text-gray-900">$28</span>
+                                    <div class="flex items-center">
+                                        <span class="text-yellow-500">⭐</span>
+                                        <span class="text-sm text-gray-600 ml-1">4.5</span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600">Custom</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700">Install</button>
+                                <button class="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-200">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: MarketplacePage -->
+
+                <!-- @COMPONENT: AnalyticsPage -->
+                <div id="analyticsPage" class="page-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Analytics Dashboard</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">App Usage</h3>
+                            <div class="flex items-center justify-center h-48 bg-gray-50 rounded-lg">
+                                <div class="text-center">
+                                    <i class="fas fa-chart-bar text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600">Usage trends would go here</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h3>
+                            <div class="flex items-center justify-center h-48 bg-gray-50 rounded-lg">
+                                <div class="text-center">
+                                    <i class="fas fa-chart-line text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600">Performance data would go here</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Server Health</h3>
+                            <div class="flex items-center justify-center h-48 bg-gray-50 rounded-lg">
+                                <div class="text-center">
+                                    <i class="fas fa-server text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600">Server metrics would go here</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">User Engagement</h3>
+                            <div class="flex items-center justify-center h-48 bg-gray-50 rounded-lg">
+                                <div class="text-center">
+                                    <i class="fas fa-users text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600">Engagement stats would go here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: AnalyticsPage -->
+
+                <!-- @COMPONENT: BillingPage -->
+                <div id="billingPage" class="page-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Billing & Subscription</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Plan</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <h4 class="text-xl font-semibold text-gray-900">Professional</h4>
+                                    <p class="text-3xl font-bold text-blue-600">$79<span class="text-lg text-gray-600">/month</span></p>
+                                    <p class="text-gray-600">Billed monthly</p>
+                                </div>
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                                    Change Plan
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Usage</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Projects</span>
+                                        <span>3/25</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full w-1/6"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>MCP Connections</span>
+                                        <span>5/∞</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-600 h-2 rounded-full w-1/12"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>API Calls</span>
+                                        <span>1.2K/10K</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-orange-600 h-2 rounded-full w-1/8"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: BillingPage -->
+
+                <!-- @COMPONENT: AdminPage -->
+                <div id="adminPage" class="page-content hidden">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Admin Panel</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Platform Stats</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Total Users</span>
+                                    <span class="text-2xl font-bold text-gray-900">127</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Active Projects</span>
+                                    <span class="text-2xl font-bold text-gray-900">89</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Revenue</span>
+                                    <span class="text-2xl font-bold text-green-600">$12,450</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Server Uptime</span>
+                                    <span class="text-green-600 font-semibold">99.9% 🟢</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Active Connections</span>
+                                    <span class="text-2xl font-bold text-gray-900">245</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Pending Reviews</span>
+                                    <span class="text-orange-600 font-semibold">3 ⚠️</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: AdminPage -->
+            </main>
+            <!-- @END_COMPONENT: PageContent -->
+        </div>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+    <!-- @END_COMPONENT: MainApp -->
+
+    <!-- @COMPONENT: Modals -->
+    <!-- Project Details Modal -->
+    <div id="projectModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Restaurant App Details</h2>
+                <button id="closeProjectModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Status</label>
+                        <p class="text-green-600 font-semibold">✅ Completed</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Progress</label>
+                        <p class="text-gray-900 font-semibold">100%</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">LLM Used</label>
+                        <p class="text-gray-900">Claude 3.7</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Generated</label>
+                        <p class="text-gray-900">2024-12-18</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-700">MCP Servers</label>
+                    <p class="text-gray-900">database, api, payment</p>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-700">Project Files</label>
+                    <div class="space-y-2 mt-2">
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span>📄 menu.json</span>
+                            <span class="text-sm text-gray-600">2.4kb</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span>📄 orders.js</span>
+                            <span class="text-sm text-gray-600">8.1kb</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span>📄 styles.css</span>
+                            <span class="text-sm text-gray-600">3.2kb</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span>📄 admin.html</span>
+                            <span class="text-sm text-gray-600">5.7kb</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Deploy</button>
+                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">Chat with App</button>
+                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Configuration Modal -->
+    <div id="serverModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Configure MCP Server</h2>
+                <button id="closeServerModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Server Name</label>
+                    <input type="text" placeholder="Database MCP" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Server Type</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option>SSE (Default)</option>
+                        <option>Stdio</option>
+                        <option>HTTP</option>
+                        <option>WebSocket</option>
+                        <option>gRPC</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">URL/Command</label>
+                    <input type="text" placeholder="wss://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea rows="3" placeholder="Real-time database connections..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg">Cancel</button>
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Save Server</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chat with App Modal -->
+    <div id="chatAppModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-4xl mx-4 h-5/6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Chat with Restaurant App</h2>
+                <button id="closeChatAppModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="h-full flex flex-col">
+                <div class="flex-1 bg-gray-50 rounded-lg p-4 mb-4 overflow-y-auto">
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3" data-mock="true">
+                            <div class="bg-gray-200 rounded-full p-2">
+                                <i class="fas fa-user text-gray-600"></i>
+                            </div>
+                            <div class="bg-white rounded-lg p-3 shadow-sm max-w-md">
+                                <p class="text-gray-800">How do I add a new menu item?</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-3" data-mock="true">
+                            <div class="bg-blue-500 rounded-full p-2">
+                                <i class="fas fa-utensils text-white"></i>
+                            </div>
+                            <div class="bg-blue-50 rounded-lg p-3 shadow-sm max-w-2xl">
+                                <p class="text-gray-800">To add a new menu item to your restaurant app:</p>
+                                <ol class="list-decimal list-inside mt-2 space-y-1">
+                                    <li>Navigate to the Admin Dashboard</li>
+                                    <li>Click on "Menu Management"</li>
+                                    <li>Select "Add New Item"</li>
+                                    <li>Fill in the item details (name, price, description, category)</li>
+                                    <li>Upload an image if desired</li>
+                                    <li>Click "Save Item"</li>
+                                </ol>
+                                <p class="mt-2 text-gray-700">The new item will immediately appear in your customer-facing menu!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <input type="text" placeholder="Ask about your restaurant app..." class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: Modals -->
+
+    <script>
+        (function() {
+            // @STATE: isLoggedIn:boolean = false
+            // @STATE: currentPage:string = 'dashboard'
+            // @STATE: currentUser:object = null
+
+            // Mock data
+            const appData = {
+                currentUser: {
+                    name: 'Sarah Johnson',
+                    email: 'demo@mcpbuilder.com',
+                    plan: 'Professional'
+                },
+                projects: [
+                    { id: 1, name: 'Restaurant App', status: 'completed', llm: 'Claude 3.7', date: '2024-12-18' },
+                    { id: 2, name: 'Customer Support', status: 'testing', llm: 'Gemini Pro', date: '2024-12-17' },
+                    { id: 3, name: 'Tour Guide', status: 'development', llm: 'LLaMA 3.3', date: '2024-12-16' }
+                ],
+                mcpServers: [
+                    { name: 'Database MCP', status: 'connected', latency: '45ms', type: 'SSE Events' },
+                    { name: 'API Gateway', status: 'connected', latency: '32ms', type: 'SSE Events' },
+                    { name: 'Auth MCP', status: 'connected', latency: '28ms', type: 'Stdio' },
+                    { name: 'Payment MCP', status: 'connected', latency: '55ms', type: 'HTTP' }
+                ],
+                chatMessages: [],
+                marketplaceApps: []
+            };
+
+            // DOM elements
+            const loginPage = document.getElementById('loginPage');
+            const mainApp = document.getElementById('mainApp');
+            const loginForm = document.getElementById('loginForm');
+            const pageTitle = document.getElementById('pageTitle');
+            const navItems = document.querySelectorAll('.nav-item');
+            const pageContents = document.querySelectorAll('.page-content');
+
+            // Initialize application
+            function init() {
+                setupEventListeners();
+                showPage('dashboard');
+            }
+
+            // Setup event listeners
+            function setupEventListeners() {
+                // Login form
+                loginForm.addEventListener('submit', handleLogin);
+
+                // Navigation
+                navItems.forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = item.getAttribute('data-page');
+                        showPage(page);
+                    });
+                });
+
+                // Chat development features
+                const transferBtn = document.getElementById('transferBtn');
+                const sendChatBtn = document.getElementById('sendChatBtn');
+                const saveAppBtn = document.getElementById('saveAppBtn');
+
+                if (transferBtn) {
+                    transferBtn.addEventListener('click', handleTransferPrompt);
+                }
+
+                if (sendChatBtn) {
+                    sendChatBtn.addEventListener('click', handleSendChat);
+                }
+
+                if (saveAppBtn) {
+                    saveAppBtn.addEventListener('click', handleSaveApp);
+                }
+
+                // Modal handlers
+                setupModalHandlers();
+
+                // Server management
+                const addServerBtn = document.getElementById('addServerBtn');
+                if (addServerBtn) {
+                    addServerBtn.addEventListener('click', () => showModal('serverModal'));
+                }
+            }
+
+            // Handle login
+            function handleLogin(e) {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                // Demo validation
+                if (email === 'demo@mcpbuilder.com' && password === 'demo123') {
+                    loginPage.classList.add('hidden');
+                    mainApp.classList.remove('hidden');
+                } else {
+                    alert('Invalid credentials. Use demo@mcpbuilder.com / demo123');
+                }
+            }
+
+            // Show specific page
+            function showPage(pageName) {
+                // Update active navigation
+                navItems.forEach(item => {
+                    item.classList.remove('bg-slate-800');
+                    if (item.getAttribute('data-page') === pageName) {
+                        item.classList.add('bg-slate-800');
+                    }
+                });
+
+                // Hide all pages
+                pageContents.forEach(page => {
+                    page.classList.add('hidden');
+                });
+
+                // Show selected page
+                const targetPage = document.getElementById(pageName + 'Page');
+                if (targetPage) {
+                    targetPage.classList.remove('hidden');
+                }
+
+                // Update page title
+                const titles = {
+                    dashboard: 'Dashboard',
+                    chat: 'Chat Development',
+                    projects: 'Projects',
+                    servers: 'MCP Servers',
+                    marketplace: 'Marketplace',
+                    analytics: 'Analytics',
+                    billing: 'Billing',
+                    admin: 'Admin Panel'
+                };
+
+                pageTitle.textContent = titles[pageName] || 'Dashboard';
+            }
+
+            // Handle chat message sending
+            function handleSendChat() {
+                const chatInput = document.getElementById('chatInput');
+                const message = chatInput.value.trim();
+                
+                if (message) {
+                    addChatMessage('user', message);
+                    chatInput.value = '';
+                    
+                    // Simulate AI response
+                    setTimeout(() => {
+                        generateAIResponse(message);
+                    }, 1000);
+                }
+            }
+
+            // Add chat message to UI
+            function addChatMessage(sender, message) {
+                const chatMessages = document.getElementById('chatMessages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'flex items-start space-x-3';
+                
+                const isUser = sender === 'user';
+                const avatarClass = isUser ? 'bg-gray-200' : 'bg-blue-500';
+                const iconClass = isUser ? 'fas fa-user text-gray-600' : 'fas fa-robot text-white';
+                const messageClass = isUser ? 'bg-gray-100' : 'bg-blue-50';
+
+                messageDiv.innerHTML = `
+                    <div class="${avatarClass} rounded-full p-2">
+                        <i class="${iconClass}"></i>
+                    </div>
+                    <div class="${messageClass} rounded-lg p-3 max-w-2xl">
+                        <p class="text-gray-800">${message}</p>
+                    </div>
+                `;
+
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            // Generate AI response
+            function generateAIResponse(userMessage) {
+                const responses = [
+                    "I'll help you build that application. Let me analyze your requirements and suggest the best approach with the right MCP servers and components.",
+                    "Great idea! I can create a comprehensive solution for you. Would you like me to start with the core functionality or focus on specific features first?",
+                    "Perfect! I'll design an application that meets your needs. Let me recommend the optimal tech stack and MCP server configuration for this project."
+                ];
+
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addChatMessage('ai', randomResponse);
+            }
+
+            // Handle transfer prompt
+            function handleTransferPrompt() {
+                const mainPrompt = document.getElementById('mainPrompt');
+                const lastAIMessage = Array.from(document.querySelectorAll('#chatMessages .bg-blue-50'))
+                    .pop()?.querySelector('p')?.textContent;
+                
+                if (lastAIMessage && mainPrompt) {
+                    mainPrompt.value = lastAIMessage;
+                    // Show visual feedback
+                    transferBtn.textContent = 'Transferred!';
+                    transferBtn.classList.add('bg-green-500');
+                    transferBtn.classList.remove('bg-orange-500');
+                    
+                    setTimeout(() => {
+                        transferBtn.textContent = 'Transfer left ready prompt';
+                        transferBtn.classList.remove('bg-green-500');
+                        transferBtn.classList.add('bg-orange-500');
+                    }, 2000);
+                }
+            }
+
+            // Handle save app
+            function handleSaveApp() {
+                const appName = document.getElementById('appName').value;
+                const prompt = document.getElementById('mainPrompt').value;
+                const selectedLLM = document.querySelector('input[name="llm"]:checked')?.value;
+                const selectedServers = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map(cb => cb.value);
+
+                if (!appName || !prompt || !selectedLLM || selectedServers.length === 0) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+
+                // Show building progress
+                updateLivePreview('building');
+
+                // Simulate app generation
+                setTimeout(() => {
+                    const newProject = {
+                        id: appData.projects.length + 1,
+                        name: appName,
+                        status: 'development',
+                        llm: selectedLLM,
+                        date: new Date().toISOString().split('T')[0]
+                    };
+
+                    appData.projects.push(newProject);
+                    updateLivePreview('completed');
+                    
+                    // Clear form
+                    document.getElementById('appName').value = '';
+                    document.getElementById('mainPrompt').value = '';
+                    
+                    alert('App generated successfully!');
+                }, 3000);
+            }
+
+            // Update live preview
+            function updateLivePreview(status) {
+                const livePreview = document.getElementById('livePreview');
+                
+                if (status === 'building') {
+                    livePreview.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-4xl mb-4">⚡</div>
+                            <h4 class="font-semibold text-gray-900 mb-2">Generating your app...</h4>
+                            <p class="text-gray-600 text-sm">This may take a few moments</p>
+                        </div>
+                        <div class="space-y-2 mt-6">
+                            <div class="flex items-center text-blue-600">
+                                <span class="mr-2">🔄</span>
+                                <span class="text-sm">Analyzing requirements...</span>
+                            </div>
+                            <div class="flex items-center text-gray-400">
+                                <span class="mr-2">⏳</span>
+                                <span class="text-sm">Setting up project structure...</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (status === 'completed') {
+                    livePreview.innerHTML = `
+                        <div class="text-center">
+                            <div class="text-4xl mb-4">✅</div>
+                            <h4 class="font-semibold text-gray-900 mb-2">App Generated!</h4>
+                            <p class="text-gray-600 text-sm">Your application is ready</p>
+                        </div>
+                        <div class="space-y-2 mt-6">
+                            <div class="flex items-center text-green-600">
+                                <span class="mr-2">✅</span>
+                                <span class="text-sm">Project Created</span>
+                            </div>
+                            <div class="flex items-center text-green-600">
+                                <span class="mr-2">✅</span>
+                                <span class="text-sm">Files Generated</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Modal management
+            function setupModalHandlers() {
+                // Project modal
+                const projectModal = document.getElementById('projectModal');
+                const closeProjectModal = document.getElementById('closeProjectModal');
+                
+                if (closeProjectModal) {
+                    closeProjectModal.addEventListener('click', () => hideModal('projectModal'));
+                }
+
+                // Server modal
+                const serverModal = document.getElementById('serverModal');
+                const closeServerModal = document.getElementById('closeServerModal');
+                
+                if (closeServerModal) {
+                    closeServerModal.addEventListener('click', () => hideModal('serverModal'));
+                }
+
+                // Chat app modal
+                const chatAppModal = document.getElementById('chatAppModal');
+                const closeChatAppModal = document.getElementById('closeChatAppModal');
+                
+                if (closeChatAppModal) {
+                    closeChatAppModal.addEventListener('click', () => hideModal('chatAppModal'));
+                }
+
+                // Close modals on outside click
+                window.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('fixed')) {
+                        e.target.classList.add('hidden');
+                    }
+                });
+            }
+
+            function showModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('hidden');
+                }
+            }
+
+            function hideModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            // Initialize the application
+            init();
+        })();
+    </script>
+</body>
+</html>
