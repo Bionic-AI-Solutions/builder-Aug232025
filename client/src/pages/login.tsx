@@ -52,26 +52,27 @@ export default function LoginPage() {
     try {
       // For demo purposes, we'll simulate a login with the selected persona
       const user = demoUsers[selectedPersona];
-      
+
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Create a mock user object with the selected persona
       const mockUser = {
         id: `user-${selectedPersona}`,
         username: user.name.toLowerCase().replace(' ', '_'),
         email: user.email,
+        password: user.password, // Add the missing password field
         name: user.name,
         persona: user.persona,
         plan: "pro",
         roles: [user.persona],
         permissions: [],
         metadata: {},
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
       };
-      
+
       login(mockUser);
-      
+
       toast({
         title: `Welcome, ${user.name}!`,
         description: `Logged in as ${user.persona.replace('_', ' ')}.`,
@@ -108,45 +109,39 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => handlePersonaSelect('super_admin')}
-                className={`p-3 rounded-lg border-2 transition-all ${
-                  selectedPersona === 'super_admin'
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                className={`p-3 rounded-lg border-2 transition-all ${selectedPersona === 'super_admin'
+                  ? 'border-purple-500 bg-purple-50'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}
               >
-                <Crown className={`w-6 h-6 mx-auto mb-2 ${
-                  selectedPersona === 'super_admin' ? 'text-purple-600' : 'text-gray-400'
-                }`} />
+                <Crown className={`w-6 h-6 mx-auto mb-2 ${selectedPersona === 'super_admin' ? 'text-purple-600' : 'text-gray-400'
+                  }`} />
                 <div className="text-xs font-medium">Super Admin</div>
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => handlePersonaSelect('builder')}
-                className={`p-3 rounded-lg border-2 transition-all ${
-                  selectedPersona === 'builder'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                className={`p-3 rounded-lg border-2 transition-all ${selectedPersona === 'builder'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}
               >
-                <Package className={`w-6 h-6 mx-auto mb-2 ${
-                  selectedPersona === 'builder' ? 'text-blue-600' : 'text-gray-400'
-                }`} />
+                <Package className={`w-6 h-6 mx-auto mb-2 ${selectedPersona === 'builder' ? 'text-blue-600' : 'text-gray-400'
+                  }`} />
                 <div className="text-xs font-medium">Builder</div>
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => handlePersonaSelect('end_user')}
-                className={`p-3 rounded-lg border-2 transition-all ${
-                  selectedPersona === 'end_user'
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                className={`p-3 rounded-lg border-2 transition-all ${selectedPersona === 'end_user'
+                  ? 'border-green-500 bg-green-50'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}
               >
-                <Users className={`w-6 h-6 mx-auto mb-2 ${
-                  selectedPersona === 'end_user' ? 'text-green-600' : 'text-gray-400'
-                }`} />
+                <Users className={`w-6 h-6 mx-auto mb-2 ${selectedPersona === 'end_user' ? 'text-green-600' : 'text-gray-400'
+                  }`} />
                 <div className="text-xs font-medium">End User</div>
               </button>
             </div>
@@ -191,8 +186,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full gradient-brand py-3 font-medium hover:opacity-90 transition-opacity"
               disabled={isLoading}
               data-testid="button-login"
@@ -203,18 +198,18 @@ export default function LoginPage() {
             <div className="text-center">
               <p className="text-gray-500 mb-4">Or continue with</p>
               <div className="flex space-x-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="flex-1"
                   data-testid="button-google-login"
                 >
                   <Chrome className="mr-2 h-4 w-4 text-red-500" />
                   Google
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="flex-1"
                   data-testid="button-github-login"
                 >

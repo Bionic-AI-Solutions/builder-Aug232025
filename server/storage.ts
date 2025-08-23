@@ -53,6 +53,10 @@ export class MemStorage implements IStorage {
       password: "demo123", // In real app, this would be hashed
       name: "Sarah Johnson",
       plan: "Professional",
+      persona: "builder",
+      roles: ["builder"],
+      permissions: ["create_projects", "publish_to_marketplace", "view_revenue"],
+      metadata: {},
       createdAt: new Date(),
     };
     this.users.set(demoUser.id, demoUser);
@@ -66,6 +70,10 @@ export class MemStorage implements IStorage {
         password: "password123",
         name: "John Smith",
         plan: "Free",
+        persona: "builder",
+        roles: ["builder"],
+        permissions: ["create_projects", "publish_to_marketplace"],
+        metadata: {},
         createdAt: new Date("2024-12-15"),
       },
       {
@@ -75,6 +83,10 @@ export class MemStorage implements IStorage {
         password: "password123",
         name: "Alice Cooper",
         plan: "Professional",
+        persona: "end_user",
+        roles: ["end_user"],
+        permissions: ["purchase_widgets", "manage_widgets", "view_usage"],
+        metadata: {},
         createdAt: new Date("2024-12-14"),
       },
       {
@@ -84,6 +96,10 @@ export class MemStorage implements IStorage {
         password: "password123",
         name: "Mike Wilson",
         plan: "Enterprise",
+        persona: "super_admin",
+        roles: ["super_admin"],
+        permissions: ["manage_users", "view_platform_analytics", "manage_system"],
+        metadata: {},
         createdAt: new Date("2024-12-13"),
       },
       {
@@ -93,6 +109,10 @@ export class MemStorage implements IStorage {
         password: "password123",
         name: "Emma Brown",
         plan: "Professional",
+        persona: "builder",
+        roles: ["builder"],
+        permissions: ["create_projects", "publish_to_marketplace", "view_revenue"],
+        metadata: {},
         createdAt: new Date("2024-12-12"),
       },
     ];
@@ -305,6 +325,10 @@ export class MemStorage implements IStorage {
       ...insertUser,
       id,
       plan: insertUser.plan || "free",
+      persona: insertUser.persona || "builder",
+      roles: Array.isArray(insertUser.roles) ? (insertUser.roles as string[]) : [insertUser.persona || "builder"],
+      permissions: Array.isArray(insertUser.permissions) ? (insertUser.permissions as string[]) : [],
+      metadata: insertUser.metadata || {},
       createdAt: new Date()
     };
     this.users.set(id, user);
