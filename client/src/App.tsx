@@ -22,11 +22,11 @@ import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated } = useAuth();
-  
+
   if (!isAuthenticated) {
     return <LoginPage />;
   }
-  
+
   return (
     <MainLayout>
       <Component />
@@ -34,15 +34,15 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   );
 }
 
-function PersonaRoute({ 
-  component: Component, 
-  allowedPersonas 
-}: { 
+function PersonaRoute({
+  component: Component,
+  allowedPersonas
+}: {
   component: React.ComponentType;
   allowedPersonas: string[];
 }) {
   const { isAuthenticated, persona } = useAuth();
-  
+
   if (!isAuthenticated) {
     return <LoginPage />;
   }
@@ -61,7 +61,7 @@ function PersonaRoute({
       </MainLayout>
     );
   }
-  
+
   return (
     <MainLayout>
       <Component />
@@ -71,7 +71,7 @@ function PersonaRoute({
 
 function DashboardRouter() {
   const { persona } = useAuth();
-  
+
   switch (persona) {
     case 'builder':
       return <BuilderDashboard />;
@@ -86,30 +86,29 @@ function DashboardRouter() {
 
 function Router() {
   const { isAuthenticated } = useAuth();
-  
+
   return (
     <Switch>
       <Route path="/" component={() => isAuthenticated ? <ProtectedRoute component={DashboardRouter} /> : <LoginPage />} />
       <Route path="/dashboard" component={() => <ProtectedRoute component={DashboardRouter} />} />
-      
+
       {/* Persona-specific routes */}
-      <Route path="/builder-dashboard" component={() => <PersonaRoute component={BuilderDashboard} allowedPersonas={['builder']} />} />
       <Route path="/end-user-dashboard" component={() => <PersonaRoute component={EndUserDashboard} allowedPersonas={['end_user']} />} />
       <Route path="/widget/:widgetId" component={() => <PersonaRoute component={WidgetImplementation} allowedPersonas={['end_user']} />} />
-      
+
       {/* Builder-specific routes */}
       <Route path="/chat" component={() => <PersonaRoute component={ChatDevelopment} allowedPersonas={['builder']} />} />
       <Route path="/projects" component={() => <PersonaRoute component={Projects} allowedPersonas={['builder']} />} />
-      
+
       {/* Shared routes */}
       <Route path="/servers" component={() => <ProtectedRoute component={MCPServers} />} />
       <Route path="/marketplace" component={() => <ProtectedRoute component={Marketplace} />} />
       <Route path="/analytics" component={() => <ProtectedRoute component={Analytics} />} />
       <Route path="/billing" component={() => <ProtectedRoute component={Billing} />} />
-      
+
       {/* Admin routes */}
       <Route path="/admin" component={() => <PersonaRoute component={Admin} allowedPersonas={['super_admin']} />} />
-      
+
       <Route component={NotFound} />
     </Switch>
   );

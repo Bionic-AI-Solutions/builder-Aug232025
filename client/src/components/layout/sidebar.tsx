@@ -27,7 +27,6 @@ const getNavigation = (persona: string) => {
   ];
 
   const builderNavigation = [
-    { name: "Builder Dashboard", href: "/builder-dashboard", icon: Crown, personas: ['builder'] },
     { name: "Chat Development", href: "/chat", icon: MessageCircle, personas: ['builder'] },
     { name: "Projects", href: "/projects", icon: Folder, personas: ['builder'] },
   ];

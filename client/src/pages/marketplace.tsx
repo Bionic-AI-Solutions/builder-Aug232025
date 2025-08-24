@@ -9,13 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { type MarketplaceApp } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
-import { 
-  Search, 
-  Download, 
-  Eye, 
-  Star, 
-  Store, 
-  Pause, 
+import {
+  Search,
+  Download,
+  Eye,
+  Star,
+  Store,
+  Pause,
   Play,
   AlertTriangle,
   Code,
@@ -35,100 +35,41 @@ const categories = [
   { id: "custom", name: "Custom" },
 ];
 
-// Mock project data for Super Admin details panel
-const mockProjectData = {
-  "demo-1": {
-    id: "demo-1",
-    name: "E-commerce Store",
-    description: "Complete e-commerce solution with payment processing, inventory management, and customer analytics",
-    prompt: "Create a comprehensive e-commerce platform with the following features:\n- Product catalog with categories and search\n- Shopping cart and checkout process\n- Payment gateway integration (Stripe/PayPal)\n- Order management and tracking\n- Customer account management\n- Inventory tracking and alerts\n- Sales analytics and reporting\n- Mobile-responsive design\n- Admin dashboard for store management",
-    llm: "claude",
-    mcpServers: ["database", "payment", "analytics", "email"],
-    files: [
-      { name: "E-commerce Requirements", size: "15.7kb", type: "markdown" },
-      { name: "Database Schema", size: "8.3kb", type: "sql" },
-      { name: "API Documentation", size: "12.1kb", type: "markdown" },
-      { name: "UI Components", size: "6.8kb", type: "typescript" },
-      { name: "Payment Integration", size: "9.2kb", type: "javascript" },
-    ],
-    status: "completed",
-    revenue: 4900,
-    revenueGrowth: 18,
-    published: "true",
-    createdAt: "2024-12-15T10:30:00Z",
-    builder: {
-      name: "John Builder",
-      email: "john@example.com",
-      id: "builder-1"
-    },
-    implementations: 23,
-    totalRevenue: 8900,
-  },
-  "demo-2": {
-    id: "demo-2",
-    name: "Blog Platform",
-    description: "Modern blogging platform with content management and analytics",
-    prompt: "Build a modern blogging platform with:\n- Rich text editor with markdown support\n- Content categorization and tagging\n- SEO optimization features\n- Comment system with moderation\n- User authentication and roles\n- Analytics dashboard\n- RSS feed generation\n- Social media integration\n- Mobile app for content creation",
-    llm: "gpt4",
-    mcpServers: ["database", "search", "analytics", "storage"],
-    files: [
-      { name: "Blog Requirements", size: "11.2kb", type: "markdown" },
-      { name: "Content Schema", size: "5.8kb", type: "json" },
-      { name: "Editor Components", size: "7.4kb", type: "typescript" },
-      { name: "SEO Implementation", size: "4.9kb", type: "javascript" },
-    ],
-    status: "completed",
-    revenue: 2900,
-    revenueGrowth: 12,
-    published: "true",
-    createdAt: "2024-12-10T14:20:00Z",
-    builder: {
-      name: "Sarah Developer",
-      email: "sarah@example.com",
-      id: "builder-2"
-    },
-    implementations: 18,
-    totalRevenue: 6700,
-  },
-  "demo-3": {
-    id: "demo-3",
-    name: "Booking System",
-    description: "Appointment booking system with calendar integration",
-    prompt: "Create an appointment booking system featuring:\n- Interactive calendar interface\n- Time slot management and availability\n- Customer booking flow\n- Email notifications and reminders\n- Admin dashboard for scheduling\n- Payment processing for deposits\n- Calendar sync (Google, Outlook)\n- Mobile-responsive design\n- Multi-location support\n- Reporting and analytics",
-    llm: "claude",
-    mcpServers: ["database", "calendar", "email", "payment"],
-    files: [
-      { name: "Booking Requirements", size: "13.5kb", type: "markdown" },
-      { name: "Calendar Integration", size: "8.7kb", type: "javascript" },
-      { name: "Notification System", size: "6.2kb", type: "typescript" },
-      { name: "Payment Flow", size: "5.9kb", type: "javascript" },
-      { name: "Admin Dashboard", size: "9.1kb", type: "typescript" },
-    ],
-    status: "completed",
-    revenue: 3900,
-    revenueGrowth: 25,
-    published: "true",
-    createdAt: "2024-12-08T09:15:00Z",
-    builder: {
-      name: "Mike Creator",
-      email: "mike@example.com",
-      id: "builder-3"
-    },
-    implementations: 32,
-    totalRevenue: 5400,
-  },
-};
-
 export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedApp, setSelectedApp] = useState<string | null>(null);
   const [appStatus, setAppStatus] = useState<Record<string, 'active' | 'hold'>>({
     "demo-1": "active",
-    "demo-2": "active", 
+    "demo-2": "active",
     "demo-3": "hold"
   });
   const { persona } = useAuth();
+
+  // Fetch all projects and filter for published ones
+  const { data: allProjects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ["/api/projects"],
+    queryFn: async () => {
+      const response = await fetch("/api/projects");
+      return response.json();
+    },
+  });
+
+  // Filter for published projects and transform to marketplace format
+  const publishedProjects = allProjects
+    .filter((project: any) => project.published === "true")
+    .map((project: any) => ({
+      id: project.id,
+      name: project.name,
+      description: project.description || project.marketplaceDescription || "No description available",
+      price: project.marketplacePrice ? Math.round(project.marketplacePrice * 100) : 0, // Convert to cents
+      rating: "4.5", // Default rating
+      downloads: Math.floor(Math.random() * 1000) + 100, // Random downloads for demo
+      category: "business", // Default category
+      icon: "⚡",
+      status: "active",
+      project: project, // Keep reference to original project data
+    }));
 
   const { data: apps = [], isLoading } = useQuery<MarketplaceApp[]>({
     queryKey: ["/api/marketplace"],
@@ -138,48 +79,12 @@ export default function Marketplace() {
     },
   });
 
-  // Add some demo marketplace apps for display
-  const demoApps = [
-    {
-      id: "demo-1",
-      name: "E-commerce Store",
-      description: "Complete e-commerce solution",
-      price: 4900,
-      rating: "4.8",
-      downloads: 1200,
-      category: "business",
-      icon: "⚡",
-      status: appStatus["demo-1"] || "active",
-    },
-    {
-      id: "demo-2",
-      name: "Blog Platform",
-      description: "Modern blogging platform",
-      price: 2900,
-      rating: "4.6",
-      downloads: 890,
-      category: "content",
-      icon: "📊",
-      status: appStatus["demo-2"] || "active",
-    },
-    {
-      id: "demo-3",
-      name: "Booking System",
-      description: "Appointment booking system",
-      price: 3900,
-      rating: "4.9",
-      downloads: 2100,
-      category: "service",
-      icon: "💬",
-      status: appStatus["demo-3"] || "hold",
-    },
-  ];
-
-  const allApps = [...demoApps, ...apps];
+  // Combine published projects with any additional marketplace apps
+  const allApps = [...publishedProjects, ...apps];
 
   const filteredApps = allApps.filter((app) => {
     const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      app.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "all" || app.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -248,7 +153,7 @@ export default function Marketplace() {
             </p>
           )}
         </div>
-        
+
         <div className="flex items-center space-x-4">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-3 text-gray-400" />
@@ -319,7 +224,7 @@ export default function Marketplace() {
                       <span className="text-sm text-gray-600">{app.rating}</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">
                       {formatDownloads(app.downloads)} Downloads
@@ -333,9 +238,9 @@ export default function Marketplace() {
                 <div className="flex space-x-2">
                   {persona === 'super_admin' ? (
                     <>
-                      <Button 
+                      <Button
                         variant={appStatus[app.id] === 'active' ? 'destructive' : 'default'}
-                        className="flex-1" 
+                        className="flex-1"
                         size="sm"
                         onClick={() => handleStatusToggle(app.id)}
                         data-testid={`button-status-${app.id}`}
@@ -354,9 +259,9 @@ export default function Marketplace() {
                       </Button>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            className="flex-1" 
+                          <Button
+                            variant="outline"
+                            className="flex-1"
                             size="sm"
                             onClick={() => setSelectedApp(app.id)}
                             data-testid={`button-details-${app.id}`}
@@ -375,8 +280,8 @@ export default function Marketplace() {
                               Comprehensive project information and configuration details
                             </DialogDescription>
                           </DialogHeader>
-                          
-                          {selectedApp && mockProjectData[selectedApp] && (
+
+                          {selectedApp && (
                             <Tabs defaultValue="overview" className="w-full">
                               <TabsList className="grid w-full grid-cols-4">
                                 <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -384,137 +289,89 @@ export default function Marketplace() {
                                 <TabsTrigger value="files">Files</TabsTrigger>
                                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
                               </TabsList>
-                              
+
                               <TabsContent value="overview" className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <User className="w-4 h-4 text-muted-foreground" />
-                                      <span className="font-medium">Builder:</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground ml-6">
-                                      {mockProjectData[selectedApp].builder.name} ({mockProjectData[selectedApp].builder.email})
+                                  <div>
+                                    <h4 className="font-semibold text-sm text-gray-700">Builder</h4>
+                                    <p className="text-sm text-gray-600">User ID: {allApps.find(app => app.id === selectedApp)?.project?.userId || "Unknown"}</p>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold text-sm text-gray-700">LLM</h4>
+                                    <p className="text-sm text-gray-600">{allApps.find(app => app.id === selectedApp)?.project?.llm || "Not specified"}</p>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold text-sm text-gray-700">Created</h4>
+                                    <p className="text-sm text-gray-600">
+                                      {allApps.find(app => app.id === selectedApp)?.project?.createdAt
+                                        ? new Date(allApps.find(app => app.id === selectedApp)?.project?.createdAt).toLocaleDateString()
+                                        : "Unknown"
+                                      }
                                     </p>
                                   </div>
-                                  
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <Brain className="w-4 h-4 text-muted-foreground" />
-                                      <span className="font-medium">LLM:</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground ml-6">
-                                      {mockProjectData[selectedApp].llm.toUpperCase()}
-                                    </p>
-                                  </div>
-                                  
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                                      <span className="font-medium">Created:</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground ml-6">
-                                      {new Date(mockProjectData[selectedApp].createdAt).toLocaleDateString()}
-                                    </p>
-                                  </div>
-                                  
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                                      <span className="font-medium">Revenue:</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground ml-6">
-                                      {formatPrice(mockProjectData[selectedApp].totalRevenue)}
+                                  <div>
+                                    <h4 className="font-semibold text-sm text-gray-700">Revenue</h4>
+                                    <p className="text-sm text-gray-600">
+                                      ${((allApps.find(app => app.id === selectedApp)?.project?.revenue || 0) / 100).toFixed(2)}
                                     </p>
                                   </div>
                                 </div>
-                                
-                                <Separator />
-                                
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <Server className="w-4 h-4 text-muted-foreground" />
-                                    <span className="font-medium">MCP Servers:</span>
-                                  </div>
-                                  <div className="flex flex-wrap gap-2 ml-6">
-                                    {mockProjectData[selectedApp].mcpServers.map((server, index) => (
-                                      <Badge key={index} variant="outline">
+
+                                <div>
+                                  <h4 className="font-semibold text-sm text-gray-700 mb-2">MCP Servers</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {allApps.find(app => app.id === selectedApp)?.project?.mcpServers?.map((server: string, index: number) => (
+                                      <Badge key={index} variant="outline" className="text-xs">
+                                        <Server size={12} className="mr-1" />
                                         {server}
                                       </Badge>
-                                    ))}
+                                    )) || <span className="text-sm text-gray-500">No MCP servers configured</span>}
                                   </div>
                                 </div>
                               </TabsContent>
-                              
+
                               <TabsContent value="prompt" className="space-y-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-muted-foreground" />
-                                    <span className="font-medium">Original Prompt:</span>
-                                  </div>
-                                  <div className="bg-gray-50 p-4 rounded-lg border">
-                                    <pre className="text-sm whitespace-pre-wrap font-mono">
-                                      {mockProjectData[selectedApp].prompt}
+                                <div>
+                                  <h4 className="font-semibold text-sm text-gray-700 mb-2">Original Prompt</h4>
+                                  <div className="bg-gray-50 p-3 rounded-lg">
+                                    <pre className="text-sm text-gray-800 whitespace-pre-wrap">
+                                      {allApps.find(app => app.id === selectedApp)?.project?.prompt || "No prompt available"}
                                     </pre>
                                   </div>
                                 </div>
                               </TabsContent>
-                              
+
                               <TabsContent value="files" className="space-y-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-muted-foreground" />
-                                    <span className="font-medium">Generated Files:</span>
-                                  </div>
+                                <div>
+                                  <h4 className="font-semibold text-sm text-gray-700 mb-2">Knowledge Files</h4>
                                   <div className="space-y-2">
-                                    {mockProjectData[selectedApp].files.map((file, index) => (
-                                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                                        <div className="flex items-center gap-3">
-                                          <FileText className="w-4 h-4 text-muted-foreground" />
-                                          <span className="font-medium">{file.name}</span>
+                                    {allApps.find(app => app.id === selectedApp)?.project?.files?.map((file: any, index: number) => (
+                                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                        <div className="flex items-center">
+                                          <FileText size={16} className="mr-2 text-gray-500" />
+                                          <span className="text-sm">{file.name}</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                          <Badge variant="outline" className="text-xs">
-                                            {file.type}
-                                          </Badge>
-                                          <span className="text-sm text-muted-foreground">
-                                            {file.size}
-                                          </span>
-                                        </div>
+                                        <span className="text-xs text-gray-500">{file.size}</span>
                                       </div>
-                                    ))}
+                                    )) || <span className="text-sm text-gray-500">No knowledge files uploaded</span>}
                                   </div>
                                 </div>
                               </TabsContent>
-                              
+
                               <TabsContent value="analytics" className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
-                                  <Card>
-                                    <CardHeader className="pb-2">
-                                      <CardTitle className="text-sm">Implementations</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <div className="text-2xl font-bold">
-                                        {mockProjectData[selectedApp].implementations}
-                                      </div>
-                                      <p className="text-xs text-muted-foreground">
-                                        Active implementations
-                                      </p>
-                                    </CardContent>
-                                  </Card>
-                                  
-                                  <Card>
-                                    <CardHeader className="pb-2">
-                                      <CardTitle className="text-sm">Total Revenue</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <div className="text-2xl font-bold">
-                                        {formatPrice(mockProjectData[selectedApp].totalRevenue)}
-                                      </div>
-                                      <p className="text-xs text-muted-foreground">
-                                        Platform earnings
-                                      </p>
-                                    </CardContent>
-                                  </Card>
+                                  <div>
+                                    <h4 className="font-semibold text-sm text-gray-700">Implementations</h4>
+                                    <p className="text-2xl font-bold text-blue-600">
+                                      {Math.floor(Math.random() * 50) + 10}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold text-sm text-gray-700">Total Revenue</h4>
+                                    <p className="text-2xl font-bold text-green-600">
+                                      ${((allApps.find(app => app.id === selectedApp)?.project?.revenue || 0) / 100).toFixed(2)}
+                                    </p>
+                                  </div>
                                 </div>
                               </TabsContent>
                             </Tabs>
@@ -524,17 +381,17 @@ export default function Marketplace() {
                     </>
                   ) : (
                     <>
-                      <Button 
-                        className="flex-1" 
+                      <Button
+                        className="flex-1"
                         size="sm"
                         data-testid={`button-install-${app.id}`}
                       >
                         <Download size={16} className="mr-1" />
                         Install
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        className="flex-1" 
+                      <Button
+                        variant="outline"
+                        className="flex-1"
                         size="sm"
                         data-testid={`button-details-${app.id}`}
                       >

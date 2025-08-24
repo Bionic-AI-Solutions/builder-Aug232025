@@ -118,7 +118,7 @@ export class MemStorage implements IStorage {
     ];
     additionalUsers.forEach(user => this.users.set(user.id, user));
 
-    // Create demo projects
+    // Create demo projects for demo user
     const projects: Project[] = [
       {
         id: "project-1",
@@ -130,16 +130,18 @@ export class MemStorage implements IStorage {
         llm: "claude",
         mcpServers: ["database", "api", "payment"],
         files: [
-          { name: "Knowledge Article 1", size: "2.4kb", type: "markdown" },
-          { name: "Knowledge Article 2", size: "8.1kb", type: "markdown" },
-          { name: "Knowledge Article 3", size: "3.2kb", type: "markdown" },
-          { name: "Knowledge Article 4", size: "5.7kb", type: "markdown" },
-          { name: "Knowledge Article 5", size: "4.8kb", type: "markdown" },
+          { name: "Restaurant Knowledge Base", size: "2.4kb", type: "markdown" },
+          { name: "Menu Management Guide", size: "8.1kb", type: "markdown" },
+          { name: "Order Processing Manual", size: "3.2kb", type: "markdown" },
+          { name: "Staff Training Materials", size: "5.7kb", type: "markdown" },
+          { name: "Customer Service Guidelines", size: "4.8kb", type: "markdown" },
         ],
         revenue: 4500, // $45.00
-        revenueGrowth: 18,
+        revenueGrowth: 12.5,
         published: "true",
-        createdAt: new Date("2024-12-18"),
+        marketplacePrice: 29.99,
+        marketplaceDescription: "Complete restaurant management chatbot with menu handling, order processing, and customer support capabilities.",
+        createdAt: new Date("2024-12-10"),
       },
       {
         id: "project-2",
@@ -151,16 +153,18 @@ export class MemStorage implements IStorage {
         llm: "claude",
         mcpServers: ["database", "api", "payment"],
         files: [
-          { name: "Knowledge Article 1", size: "15.7kb", type: "markdown" },
-          { name: "Knowledge Article 2", size: "9.3kb", type: "markdown" },
-          { name: "Knowledge Article 3", size: "7.2kb", type: "markdown" },
-          { name: "Knowledge Article 4", size: "6.8kb", type: "markdown" },
-          { name: "Knowledge Article 5", size: "11.4kb", type: "markdown" },
+          { name: "E-commerce Knowledge Base", size: "15.7kb", type: "markdown" },
+          { name: "Product Catalog Guide", size: "9.3kb", type: "markdown" },
+          { name: "Payment Processing Manual", size: "7.2kb", type: "markdown" },
+          { name: "Order Management Guide", size: "6.8kb", type: "markdown" },
+          { name: "Customer Support Handbook", size: "11.4kb", type: "markdown" },
         ],
         revenue: 7250, // $72.50
         revenueGrowth: 25,
         published: "true",
-        createdAt: new Date("2024-12-17"),
+        marketplacePrice: 19.99,
+        marketplaceDescription: "Modern e-commerce platform with cart and payments, perfect for online stores.",
+        createdAt: new Date("2024-12-11"),
       },
       {
         id: "project-3",
@@ -172,10 +176,10 @@ export class MemStorage implements IStorage {
         llm: "gemini",
         mcpServers: ["database", "api", "auth"],
         files: [
-          { name: "Knowledge Article 1", size: "12.3kb", type: "markdown" },
-          { name: "Knowledge Article 2", size: "8.9kb", type: "markdown" },
-          { name: "Knowledge Article 3", size: "5.4kb", type: "markdown" },
-          { name: "Knowledge Article 4", size: "6.7kb", type: "markdown" },
+          { name: "Blog Content Guidelines", size: "12.3kb", type: "markdown" },
+          { name: "SEO Best Practices", size: "8.9kb", type: "markdown" },
+          { name: "Content Management Guide", size: "5.4kb", type: "markdown" },
+          { name: "Publishing Workflow", size: "6.7kb", type: "markdown" },
         ],
         revenue: 3200, // $32.00
         revenueGrowth: 12,
@@ -192,9 +196,9 @@ export class MemStorage implements IStorage {
         llm: "claude",
         mcpServers: ["database", "api"],
         files: [
-          { name: "Knowledge Article 1", size: "18.2kb", type: "markdown" },
-          { name: "Knowledge Article 2", size: "14.5kb", type: "markdown" },
-          { name: "Knowledge Article 3", size: "7.3kb", type: "markdown" },
+          { name: "Fitness Training Guide", size: "18.2kb", type: "markdown" },
+          { name: "Workout Plans Database", size: "14.5kb", type: "markdown" },
+          { name: "Health Metrics Guide", size: "7.3kb", type: "markdown" },
         ],
         revenue: 0,
         revenueGrowth: 0,
@@ -211,18 +215,123 @@ export class MemStorage implements IStorage {
         llm: "llama",
         mcpServers: ["database", "api", "auth"],
         files: [
-          { name: "Knowledge Article 1", size: "16.8kb", type: "markdown" },
-          { name: "Knowledge Article 2", size: "9.6kb", type: "markdown" },
-          { name: "Knowledge Article 3", size: "3.9kb", type: "markdown" },
+          { name: "Project Management Guide", size: "16.8kb", type: "markdown" },
+          { name: "Team Collaboration Handbook", size: "9.6kb", type: "markdown" },
+          { name: "Task Management Best Practices", size: "3.9kb", type: "markdown" },
         ],
         revenue: 0,
         revenueGrowth: 0,
         published: "false",
         createdAt: new Date("2024-12-14"),
       },
+      {
+        id: "project-6",
+        userId: demoUser.id,
+        name: "Analytics Dashboard",
+        description: "Business intelligence and data visualization platform",
+        prompt: "Build a comprehensive analytics dashboard with data visualization, reporting tools, and real-time metrics",
+        status: "completed",
+        llm: "gpt4",
+        mcpServers: ["database", "api", "analytics"],
+        files: [
+          { name: "Analytics Framework Guide", size: "22.1kb", type: "markdown" },
+          { name: "Data Visualization Standards", size: "18.7kb", type: "markdown" },
+          { name: "Reporting Best Practices", size: "14.3kb", type: "markdown" },
+          { name: "API Integration Guide", size: "12.9kb", type: "markdown" },
+        ],
+        revenue: 0,
+        revenueGrowth: 0,
+        published: "false",
+        createdAt: new Date("2024-12-13"),
+      },
+    ];
+
+    // Create projects for builder user (user-builder)
+    const builderProjects: Project[] = [
+      {
+        id: "builder-project-1",
+        userId: "user-builder",
+        name: "Customer Support Chatbot",
+        description: "AI-powered customer support chatbot with knowledge base integration",
+        prompt: "Create an intelligent customer support chatbot that can handle common inquiries, integrate with knowledge base, and escalate complex issues",
+        status: "completed",
+        llm: "claude",
+        mcpServers: ["database", "api", "knowledge"],
+        files: [
+          { name: "Customer Support Knowledge Base", size: "28.3kb", type: "markdown" },
+          { name: "FAQ Database", size: "15.7kb", type: "markdown" },
+          { name: "Support Workflow Guide", size: "12.4kb", type: "markdown" },
+          { name: "Response Templates", size: "8.9kb", type: "markdown" },
+        ],
+        revenue: 0,
+        revenueGrowth: 0,
+        published: "true",
+        marketplacePrice: 39.99,
+        marketplaceDescription: "AI-powered customer support chatbot with comprehensive knowledge base integration and intelligent issue resolution.",
+        createdAt: new Date("2024-12-18"),
+      },
+      {
+        id: "builder-project-2",
+        userId: "user-builder",
+        name: "E-commerce Recommendation Engine",
+        description: "Smart product recommendation system for online stores",
+        prompt: "Build an AI-powered recommendation engine that suggests products based on user behavior, purchase history, and preferences",
+        status: "completed",
+        llm: "gpt4",
+        mcpServers: ["database", "api", "analytics"],
+        files: [
+          { name: "Product Recommendation Guide", size: "31.2kb", type: "markdown" },
+          { name: "User Behavior Analysis", size: "19.8kb", type: "markdown" },
+          { name: "Product Database Schema", size: "14.6kb", type: "markdown" },
+          { name: "Recommendation Algorithms", size: "11.3kb", type: "markdown" },
+        ],
+        revenue: 0,
+        revenueGrowth: 0,
+        published: "false",
+        createdAt: new Date("2024-12-17"),
+      },
+      {
+        id: "builder-project-3",
+        userId: "user-builder",
+        name: "Content Generation Assistant",
+        description: "AI content creator for blogs, social media, and marketing",
+        prompt: "Develop an AI assistant that generates high-quality content for blogs, social media posts, and marketing materials",
+        status: "testing",
+        llm: "gemini",
+        mcpServers: ["database", "api", "content"],
+        files: [
+          { name: "Content Creation Guidelines", size: "25.7kb", type: "markdown" },
+          { name: "Writing Style Guide", size: "13.4kb", type: "markdown" },
+          { name: "SEO Content Best Practices", size: "16.8kb", type: "markdown" },
+        ],
+        revenue: 0,
+        revenueGrowth: 0,
+        published: "false",
+        createdAt: new Date("2024-12-16"),
+      },
+      {
+        id: "builder-project-4",
+        userId: "user-builder",
+        name: "Financial Planning Advisor",
+        description: "Personal finance advisor with investment recommendations",
+        prompt: "Create a financial planning AI that provides personalized investment advice, budget planning, and financial goal tracking",
+        status: "development",
+        llm: "claude",
+        mcpServers: ["database", "api", "finance"],
+        files: [
+          { name: "Financial Planning Guide", size: "18.9kb", type: "markdown" },
+          { name: "Investment Strategies", size: "22.1kb", type: "markdown" },
+          { name: "Budget Management Guide", size: "14.3kb", type: "markdown" },
+        ],
+        revenue: 0,
+        revenueGrowth: 0,
+        published: "false",
+        createdAt: new Date("2024-12-15"),
+      },
     ];
 
     projects.forEach(project => this.projects.set(project.id, project));
+    builderProjects.forEach(project => this.projects.set(project.id, project));
 
     // Create demo MCP servers
     const servers: McpServer[] = [
