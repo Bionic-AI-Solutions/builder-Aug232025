@@ -12,6 +12,10 @@ export const users = pgTable("users", {
   permissions: jsonb("permissions").$type<string[]>().default([]),
   metadata: jsonb("metadata").default({}),
   isActive: text("is_active").notNull().default("true"),
+  approvalStatus: text("approval_status").notNull().default("pending"), // pending, approved, rejected
+  approvedBy: varchar("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

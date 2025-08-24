@@ -7,10 +7,13 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserById(id: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
+  getPendingUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
   updateUserPassword(id: string, passwordHash: string): Promise<void>;
   updateUserLastLogin(id: string): Promise<void>;
+  approveUser(userId: string, approvedBy: string): Promise<void>;
+  rejectUser(userId: string, rejectedBy: string, reason: string): Promise<void>;
   deleteUser(id: string): Promise<boolean>;
 
   // Projects
@@ -59,6 +62,9 @@ export class MemStorage implements IStorage {
       permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
       metadata: {},
       isActive: "true",
+      approvalStatus: "approved",
+      approvedBy: "user-4", // Super admin
+      approvedAt: new Date(),
       lastLoginAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -76,6 +82,9 @@ export class MemStorage implements IStorage {
         permissions: ["create_project", "edit_project", "publish_project"],
         metadata: {},
         isActive: "true",
+        approvalStatus: "approved",
+        approvedBy: "user-4", // Super admin
+        approvedAt: new Date("2024-12-15"),
         lastLoginAt: null,
         createdAt: new Date("2024-12-15"),
         updatedAt: new Date("2024-12-15"),
@@ -89,6 +98,9 @@ export class MemStorage implements IStorage {
         permissions: ["purchase_project", "use_widget"],
         metadata: {},
         isActive: "true",
+        approvalStatus: "approved",
+        approvedBy: "user-4", // Super admin
+        approvedAt: new Date("2024-12-14"),
         lastLoginAt: null,
         createdAt: new Date("2024-12-14"),
         updatedAt: new Date("2024-12-14"),
@@ -102,6 +114,9 @@ export class MemStorage implements IStorage {
         permissions: ["*"], // Super admin has all permissions
         metadata: {},
         isActive: "true",
+        approvalStatus: "approved", // Super admin is auto-approved
+        approvedBy: null,
+        approvedAt: new Date("2024-12-13"),
         lastLoginAt: null,
         createdAt: new Date("2024-12-13"),
         updatedAt: new Date("2024-12-13"),
@@ -115,6 +130,9 @@ export class MemStorage implements IStorage {
         permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
         metadata: {},
         isActive: "true",
+        approvalStatus: "approved",
+        approvedBy: "user-4", // Super admin
+        approvedAt: new Date("2024-12-12"),
         lastLoginAt: null,
         createdAt: new Date("2024-12-12"),
         updatedAt: new Date("2024-12-12"),
@@ -132,6 +150,9 @@ export class MemStorage implements IStorage {
       permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
       metadata: {},
       isActive: "true",
+      approvalStatus: "approved",
+      approvedBy: "user-4", // Super admin
+      approvedAt: new Date("2024-12-10"),
       lastLoginAt: null,
       createdAt: new Date("2024-12-10"),
       updatedAt: new Date("2024-12-10"),
@@ -462,6 +483,10 @@ export class MemStorage implements IStorage {
       permissions: Array.isArray(insertUser.permissions) ? (insertUser.permissions as string[]) : [],
       metadata: insertUser.metadata || {},
       isActive: "true",
+      approvalStatus: insertUser.approvalStatus || "pending",
+      approvedBy: insertUser.approvedBy,
+      approvedAt: insertUser.approvedAt,
+      rejectionReason: insertUser.rejectionReason,
       lastLoginAt: null,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -493,6 +518,39 @@ export class MemStorage implements IStorage {
 
     const updatedUser = { ...user, lastLoginAt: new Date() };
     this.users.set(id, updatedUser);
+  }
+
+  async getPendingUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).filter(user => user.approvalStatus === 'pending');
+  }
+
+  async approveUser(userId: string, approvedBy: string): Promise<void> {
+    const user = this.users.get(userId);
+    if (!user) return;
+
+    const updatedUser = { 
+      ...user, 
+      approvalStatus: 'approved' as const,
+      approvedBy,
+      approvedAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.users.set(userId, updatedUser);
+  }
+
+  async rejectUser(userId: string, rejectedBy: string, reason: string): Promise<void> {
+    const user = this.users.get(userId);
+    if (!user) return;
+
+    const updatedUser = { 
+      ...user, 
+      approvalStatus: 'rejected' as const,
+      approvedBy: rejectedBy,
+      approvedAt: new Date(),
+      rejectionReason: reason,
+      updatedAt: new Date()
+    };
+    this.users.set(userId, updatedUser);
   }
 
   async deleteUser(id: string): Promise<boolean> {

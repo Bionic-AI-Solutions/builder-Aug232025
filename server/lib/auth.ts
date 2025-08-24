@@ -38,6 +38,10 @@ export interface User {
   permissions: Permission[];
   metadata: Record<string, any>;
   isActive: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: Date;
+  rejectionReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }

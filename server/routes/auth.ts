@@ -58,6 +58,22 @@ router.post('/login', loginRateLimit, async (req: Request, res: Response) => {
       });
     }
 
+    // Check approval status
+    if (user.approvalStatus === 'pending') {
+      return res.status(401).json({
+        error: 'Account pending approval. Please wait for admin approval.',
+        code: 'ACCOUNT_PENDING_APPROVAL'
+      });
+    }
+
+    if (user.approvalStatus === 'rejected') {
+      return res.status(401).json({
+        error: 'Account registration was rejected.',
+        code: 'ACCOUNT_REJECTED',
+        reason: user.rejectionReason
+      });
+    }
+
     // Verify password
     const isValidPassword = await comparePassword(password, user.password_hash);
     if (!isValidPassword) {
@@ -145,33 +161,28 @@ router.post('/register', registerRateLimit, async (req: Request, res: Response) 
     // Create user with roles and permissions
     const userData = createUserWithRoles(email, persona, metadata);
 
-    // Create user in database
+    // Create user in database with pending approval
     const user = await storage.createUser({
       ...userData,
       password_hash: passwordHash,
+      approvalStatus: 'pending',
     });
 
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokenPair(user);
+    // Don't generate tokens for pending users
+    // They need approval before they can log in
 
     // Return success response
     res.status(201).json({
       success: true,
-      message: 'Registration successful',
+      message: 'Registration successful. Your account is pending approval.',
       data: {
         user: {
           id: user.id,
           email: user.email,
           persona: user.persona,
-          roles: user.roles,
-          permissions: user.permissions,
-          metadata: user.metadata,
+          approvalStatus: user.approvalStatus,
         },
-        tokens: {
-          accessToken,
-          refreshToken,
-          expiresIn: 15 * 60, // 15 minutes in seconds
-        }
+        message: 'Please wait for admin approval before you can log in.'
       }
     });
 
@@ -467,6 +478,124 @@ router.post('/register-admin', authenticateToken, requireSuperAdmin, async (req:
     }
 
     console.error('[REGISTER ADMIN ERROR]', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
+/**
+ * GET /api/auth/pending-users
+ * Get list of users pending approval (super admin only)
+ */
+router.get('/pending-users', authenticateToken, requireSuperAdmin, async (req: Request, res: Response) => {
+  try {
+    const pendingUsers = await storage.getPendingUsers();
+    
+    res.json({
+      success: true,
+      data: {
+        users: pendingUsers.map(user => ({
+          id: user.id,
+          email: user.email,
+          persona: user.persona,
+          createdAt: user.createdAt,
+          metadata: user.metadata,
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('[PENDING USERS ERROR]', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/approve-user/:userId
+ * Approve a pending user (super admin only)
+ */
+router.post('/approve-user/:userId', authenticateToken, requireSuperAdmin, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { approvedBy } = req.user!;
+
+    const user = await storage.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
+    if (user.approvalStatus !== 'pending') {
+      return res.status(400).json({
+        error: 'User is not pending approval',
+        code: 'USER_NOT_PENDING'
+      });
+    }
+
+    await storage.approveUser(userId, approvedBy);
+
+    res.json({
+      success: true,
+      message: 'User approved successfully'
+    });
+  } catch (error) {
+    console.error('[APPROVE USER ERROR]', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/reject-user/:userId
+ * Reject a pending user (super admin only)
+ */
+router.post('/reject-user/:userId', authenticateToken, requireSuperAdmin, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { approvedBy } = req.user!;
+    const { reason } = z.object({
+      reason: z.string().min(1, 'Rejection reason is required')
+    }).parse(req.body);
+
+    const user = await storage.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
+    if (user.approvalStatus !== 'pending') {
+      return res.status(400).json({
+        error: 'User is not pending approval',
+        code: 'USER_NOT_PENDING'
+      });
+    }
+
+    await storage.rejectUser(userId, approvedBy, reason);
+
+    res.json({
+      success: true,
+      message: 'User rejected successfully'
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Validation error',
+        code: 'VALIDATION_ERROR',
+        details: error.errors
+      });
+    }
+
+    console.error('[REJECT USER ERROR]', error);
     res.status(500).json({
       error: 'Internal server error',
       code: 'INTERNAL_ERROR'
