@@ -44,7 +44,7 @@ export const projects = pgTable("projects", {
   status: text("status").notNull().default("development"), // development, testing, completed
   llm: text("llm").notNull(), // claude, gemini, llama, gpt4
   mcpServers: jsonb("mcp_servers").$type<string[]>().notNull().default([]),
-  files: jsonb("files").$type<{name: string, size: string, type: string}[]>().default([]),
+  files: jsonb("files").$type<{ name: string, size: string, type: string }[]>().default([]),
   revenue: integer("revenue").default(0), // in cents
   revenueGrowth: integer("revenue_growth").default(0), // percentage
   published: text("published").default("false"), // "true" or "false"
@@ -134,6 +134,53 @@ export const usageEvents = pgTable("usage_events", {
   sessionId: varchar("session_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// ============================================================================
+// LLM PROVIDERS SCHEMA
+// ============================================================================
+
+export const llmProviders = pgTable('llm_providers', {
+  id: text('id').primaryKey().$defaultFn(() => `provider-${crypto.randomUUID()}`),
+  name: text('name').notNull(),
+  type: text('type', { enum: ['cloud', 'local'] }).notNull(),
+  description: text('description'),
+  baseUrl: text('base_url'),
+  apiKey: text('api_key_encrypted'), // Encrypted API key
+  status: text('status', { enum: ['active', 'inactive', 'configured', 'error'] }).notNull().default('inactive'),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  createdBy: text('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const llmModels = pgTable('llm_models', {
+  id: text('id').primaryKey().$defaultFn(() => `model-${crypto.randomUUID()}`),
+  providerId: text('provider_id').notNull().references(() => llmProviders.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  displayName: text('display_name'),
+  type: text('type', { enum: ['chat', 'completion', 'embedding'] }).notNull().default('chat'),
+  status: text('status', { enum: ['available', 'unavailable', 'deprecated'] }).notNull().default('unavailable'),
+  contextLength: integer('context_length'),
+  maxTokens: integer('max_tokens'),
+  pricing: jsonb('pricing').$type<{
+    input?: string;
+    output?: string;
+    perToken?: boolean;
+  }>(),
+  capabilities: jsonb('capabilities').$type<string[]>(),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export type LLMProvider = typeof llmProviders.$inferSelect;
+export type NewLLMProvider = typeof llmProviders.$inferInsert;
+export type LLMModel = typeof llmModels.$inferSelect;
+export type NewLLMModel = typeof llmModels.$inferInsert;
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { verifyAccessToken, hasPermission, hasAnyPermission, type User, type Persona } from '../lib/auth';
+import { storage } from '../storage';
 
 // Extend Express Request to include user
 declare global {
@@ -20,26 +21,62 @@ declare global {
  */
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        console.log('[AUTHENTICATE] Starting authentication for:', req.path);
         const authHeader = req.headers.authorization;
         const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
+        console.log('[AUTHENTICATE] Auth header exists:', !!authHeader);
+        console.log('[AUTHENTICATE] Token exists:', !!token);
+
         if (!token) {
+            console.log('[AUTHENTICATE] No token provided');
             return res.status(401).json({
                 error: 'Access token required',
                 code: 'TOKEN_REQUIRED'
             });
         }
 
-        const user = await verifyAccessToken(token);
-        if (!user) {
+        // Verify the token first
+        console.log('[AUTHENTICATE] Verifying token...');
+        console.log('[AUTHENTICATE] Token (first 20 chars):', token.substring(0, 20) + '...');
+        console.log('[AUTHENTICATE] JWT_SECRET exists:', !!process.env.JWT_SECRET);
+        console.log('[AUTHENTICATE] JWT_SECRET length:', process.env.JWT_SECRET?.length);
+
+        let payload;
+        try {
+            payload = verifyAccessToken(token);
+            console.log('[AUTHENTICATE] Token payload:', payload);
+        } catch (error) {
+            console.log('[AUTHENTICATE] Token verification failed:', error.message);
+            throw error;
+        }
+
+        if (!payload) {
+            console.log('[AUTHENTICATE] Invalid token');
             return res.status(401).json({
                 error: 'Invalid or expired token',
                 code: 'INVALID_TOKEN'
             });
         }
 
+        // Fetch the full user data from storage
+        console.log('[AUTHENTICATE] Fetching user:', payload.userId);
+        const user = await storage.getUser(payload.userId);
+        console.log('[AUTHENTICATE] User found:', !!user);
+        console.log('[AUTHENTICATE] User persona:', user?.persona);
+        console.log('[AUTHENTICATE] User isActive:', user?.isActive);
+
+        if (!user) {
+            console.log('[AUTHENTICATE] User not found');
+            return res.status(401).json({
+                error: 'User not found',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+
         // Check if user is active
         if (!user.isActive) {
+            console.log('[AUTHENTICATE] User is inactive');
             return res.status(401).json({
                 error: 'Account is deactivated',
                 code: 'ACCOUNT_DEACTIVATED'
@@ -48,6 +85,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
         // Check approval status for non-super-admin users
         if (user.persona !== 'super_admin' && user.approvalStatus !== 'approved') {
+            console.log('[AUTHENTICATE] User not approved:', user.approvalStatus);
             return res.status(401).json({
                 error: 'Account pending approval or rejected',
                 code: 'ACCOUNT_NOT_APPROVED',
@@ -55,6 +93,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             });
         }
 
+        console.log('[AUTHENTICATE] Authentication successful for user:', user.id);
         req.user = user;
         next();
     } catch (error) {
@@ -75,9 +114,12 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
         const token = authHeader && authHeader.split(' ')[1];
 
         if (token) {
-            const user = await verifyAccessToken(token);
-            if (user && user.isActive && (user.persona === 'super_admin' || user.approvalStatus === 'approved')) {
-                req.user = user;
+            const payload = verifyAccessToken(token);
+            if (payload) {
+                const user = await storage.getUser(payload.userId);
+                if (user && user.isActive && (user.persona === 'super_admin' || user.approvalStatus === 'approved')) {
+                    req.user = user;
+                }
             }
         }
         next();
@@ -168,7 +210,29 @@ export const requirePersona = (personas: Persona[]) => {
  * Require Super Admin persona
  */
 export const requireSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
-    return requirePersona(['super_admin'])(req, res, next);
+    console.log('[REQUIRE_SUPER_ADMIN] Checking super admin access');
+    console.log('[REQUIRE_SUPER_ADMIN] User exists:', !!req.user);
+    console.log('[REQUIRE_SUPER_ADMIN] User persona:', req.user?.persona);
+
+    if (!req.user) {
+        console.log('[REQUIRE_SUPER_ADMIN] No user found');
+        return res.status(401).json({
+            error: 'Authentication required',
+            code: 'AUTHENTICATION_REQUIRED'
+        });
+    }
+
+    if (req.user.persona !== 'super_admin') {
+        console.log('[REQUIRE_SUPER_ADMIN] User is not super admin:', req.user.persona);
+        return res.status(403).json({
+            error: 'Super Admin access required',
+            code: 'SUPER_ADMIN_REQUIRED',
+            userPersona: req.user.persona
+        });
+    }
+
+    console.log('[REQUIRE_SUPER_ADMIN] Super admin access granted');
+    next();
 };
 
 /**

@@ -128,7 +128,8 @@ const mockSuperAdminData = {
 };
 
 export default function Dashboard() {
-  const { user, persona } = useAuth();
+  const { user } = useAuth();
+  const persona = user?.persona;
   const [, setLocation] = useLocation();
 
   // If not Super Admin, show regular dashboard

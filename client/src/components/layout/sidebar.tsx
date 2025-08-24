@@ -14,7 +14,8 @@ import {
   Box,
   Package,
   Users,
-  Crown
+  Crown,
+  Brain
 } from "lucide-react";
 
 // Persona-specific navigation
@@ -39,6 +40,7 @@ const getNavigation = (persona: string) => {
   const adminNavigation = [
     { name: "Admin", href: "/admin", icon: Settings, personas: ['super_admin'] },
     { name: "MCP Servers", href: "/mcp-servers", icon: Server, personas: ['super_admin'] },
+    { name: "LLMs", href: "/llms", icon: Brain, personas: ['super_admin'] },
   ];
 
   const allNavigation = [
@@ -53,8 +55,13 @@ const getNavigation = (persona: string) => {
 
 export default function Sidebar() {
   const [location] = useLocation();
-  const { persona } = useAuth();
-  const navigation = getNavigation(persona || 'builder');
+  const { user } = useAuth();
+  const persona = user?.persona || 'builder';
+  const navigation = getNavigation(persona);
+
+  // Debug logging
+  console.log('Sidebar - User:', user);
+  console.log('Sidebar - Persona:', persona);
 
   return (
     <div className="fixed left-0 top-0 h-full w-64 bg-slate-900 text-white">

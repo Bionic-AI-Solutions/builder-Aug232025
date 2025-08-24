@@ -5,6 +5,7 @@ import { insertUserSchema, insertProjectSchema, insertMcpServerSchema, insertCha
 import authRoutes from "./routes/auth";
 import oauthRoutes from "./routes/oauth";
 import marketplaceRoutes from "./routes/marketplace";
+import llmRoutes from "./routes/llms";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
@@ -14,12 +15,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register authentication routes
   app.use("/api/auth", authRoutes);
-  
+
   // Register OAuth routes
   app.use("/api/auth/oauth", oauthRoutes);
 
   // Register marketplace routes
   app.use("/api/marketplace", marketplaceRoutes);
+
+  // Register LLM routes
+  app.use("/api/llms", llmRoutes);
 
   // User routes
   app.get("/api/users/:id", async (req, res) => {

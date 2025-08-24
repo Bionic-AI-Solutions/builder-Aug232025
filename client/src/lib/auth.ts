@@ -1,113 +1,221 @@
 import { create } from 'zustand';
-import { type User } from '@shared/schema';
+import { persist } from 'zustand/middleware';
+
+export type Persona = 'super_admin' | 'builder' | 'end_user';
+export type UserRole = 'super_admin' | 'builder' | 'end_user';
+export type Permission =
+  | 'create_project'
+  | 'edit_project'
+  | 'publish_project'
+  | 'view_analytics'
+  | 'purchase_project'
+  | 'view_marketplace'
+  | 'manage_users'
+  | 'manage_marketplace'
+  | 'view_all_analytics'
+  | 'approve_users';
+
+export interface User {
+  id: string;
+  email: string;
+  persona: Persona;
+  roles: UserRole[];
+  permissions: Permission[];
+  metadata: Record<string, any>;
+  isActive: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: Date;
+  rejectionReason?: string;
+  lastLoginAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 interface AuthState {
   user: User | null;
-  persona: 'super_admin' | 'builder' | 'end_user' | null;
-  roles: string[];
-  permissions: string[];
+  token: string | null;
   isAuthenticated: boolean;
-  login: (user: User) => void;
+  isLoading: boolean;
+  error: string | null;
+
+  // Computed properties
+  persona: string | null;
+
+  // Actions
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  switchPersona: (persona: string) => void;
-  hasPermission: (permission: string) => boolean;
-  hasRole: (role: string) => boolean;
+  setUser: (user: User, token: string) => void;
+  clearError: () => void;
+  setLoading: (loading: boolean) => void;
 }
 
-// Permission constants
-export const PERMISSIONS = {
-  // Builder permissions
-  CREATE_PROJECTS: 'create_projects',
-  PUBLISH_TO_MARKETPLACE: 'publish_to_marketplace',
-  VIEW_REVENUE: 'view_revenue',
-  MANAGE_IMPLEMENTATIONS: 'manage_implementations',
-  PURCHASE_TEMPLATES: 'purchase_templates',
+// API base URL
+const API_BASE = 'http://localhost:8080/api';
 
-  // End-user permissions
-  PURCHASE_WIDGETS: 'purchase_widgets',
-  MANAGE_WIDGETS: 'manage_widgets',
-  VIEW_USAGE: 'view_usage',
-  MANAGE_BILLING: 'manage_billing',
+// Helper function to make authenticated API calls
+export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('auth-token');
+  console.log('[API_CALL] Endpoint:', endpoint);
+  console.log('[API_CALL] Token exists:', !!token);
+  console.log('[API_CALL] Token (first 20 chars):', token ? token.substring(0, 20) + '...' : 'none');
 
-  // Admin permissions
-  MANAGE_USERS: 'manage_users',
-  VIEW_PLATFORM_ANALYTICS: 'view_platform_analytics',
-  MANAGE_BUILDERS: 'manage_builders',
-  VIEW_IMPLEMENTATIONS: 'view_implementations',
-  MANAGE_SYSTEM: 'manage_system',
-} as const;
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+  };
 
-// Role definitions
-export const ROLES = {
-  SUPER_ADMIN: 'super_admin',
-  BUILDER: 'builder',
-  END_USER: 'end_user',
-} as const;
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, config);
 
-// Role-permission mapping
-export const ROLE_PERMISSIONS: Record<string, string[]> = {
-  [ROLES.SUPER_ADMIN]: Object.values(PERMISSIONS),
-  [ROLES.BUILDER]: [
-    PERMISSIONS.CREATE_PROJECTS,
-    PERMISSIONS.PUBLISH_TO_MARKETPLACE,
-    PERMISSIONS.VIEW_REVENUE,
-    PERMISSIONS.MANAGE_IMPLEMENTATIONS,
-    PERMISSIONS.PURCHASE_TEMPLATES,
-  ],
-  [ROLES.END_USER]: [
-    PERMISSIONS.PURCHASE_WIDGETS,
-    PERMISSIONS.MANAGE_WIDGETS,
-    PERMISSIONS.VIEW_USAGE,
-    PERMISSIONS.MANAGE_BILLING,
-  ],
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API call failed:', error);
+    throw error;
+  }
 };
 
-export const useAuth = create<AuthState>()((set, get) => ({
-  user: null,
-  persona: null,
-  roles: [],
-  permissions: [],
-  isAuthenticated: false,
-  login: (user: User) => {
-    const persona = user.persona as 'super_admin' | 'builder' | 'end_user';
-    const roles = user.roles || [persona];
-    const permissions = user.permissions || ROLE_PERMISSIONS[persona] || [];
-    
-    set({ 
-      user, 
-      persona,
-      roles,
-      permissions,
-      isAuthenticated: true 
-    });
-  },
-  logout: () => set({ 
-    user: null, 
-    persona: null,
-    roles: [],
-    permissions: [],
-    isAuthenticated: false 
-  }),
-  switchPersona: (persona: string) => {
-    const { user } = get();
-    if (user) {
-      const newPersona = persona as 'super_admin' | 'builder' | 'end_user';
-      const roles = [newPersona];
-      const permissions = ROLE_PERMISSIONS[newPersona] || [];
-      
-      set({ 
-        persona: newPersona,
-        roles,
-        permissions
-      });
+export const useAuth = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+
+      // Computed properties
+      get persona() {
+        return get().user?.persona || null;
+      },
+
+      login: async (email: string, password: string) => {
+        console.log('Login attempt for:', email);
+        set({ isLoading: true, error: null });
+
+        try {
+          const response = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await response.json();
+          console.log('Login response:', data);
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Login failed');
+          }
+
+          const { user, tokens } = data.data;
+          const token = tokens.accessToken;
+          console.log('Login successful, user:', user);
+          console.log('Token received:', token ? 'yes' : 'no');
+
+          // Store token in localStorage
+          localStorage.setItem('auth-token', token);
+
+          set({
+            user,
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+
+          console.log('Auth state updated');
+          return true;
+        } catch (error) {
+          console.error('Login error:', error);
+          set({
+            isLoading: false,
+            error: error instanceof Error ? error.message : 'Login failed',
+          });
+          return false;
+        }
+      },
+
+      logout: () => {
+        localStorage.removeItem('auth-token');
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          error: null,
+        });
+      },
+
+      setUser: (user: User, token: string) => {
+        localStorage.setItem('auth-token', token);
+        set({
+          user,
+          token,
+          isAuthenticated: true,
+          error: null,
+        });
+      },
+
+      // Initialize auth state from localStorage on app start
+      initializeAuth: () => {
+        console.log('Initializing auth state...');
+        const token = localStorage.getItem('auth-token');
+        console.log('Token from localStorage:', token ? 'exists' : 'not found');
+
+        if (token) {
+          // Try to restore user from localStorage
+          const storedState = localStorage.getItem('auth-storage');
+          console.log('Stored state from localStorage:', storedState ? 'exists' : 'not found');
+
+          if (storedState) {
+            try {
+              const parsed = JSON.parse(storedState);
+              console.log('Parsed state:', parsed);
+
+              if (parsed.state && parsed.state.user && parsed.state.token) {
+                console.log('Restoring user:', parsed.state.user);
+                set({
+                  user: parsed.state.user,
+                  token: parsed.state.token,
+                  isAuthenticated: true,
+                  error: null,
+                });
+              } else {
+                console.log('Invalid stored state structure');
+                // Clear invalid state
+                localStorage.removeItem('auth-token');
+                localStorage.removeItem('auth-storage');
+              }
+            } catch (error) {
+              console.error('Failed to restore auth state:', error);
+              localStorage.removeItem('auth-token');
+              localStorage.removeItem('auth-storage');
+            }
+          } else {
+            console.log('No stored state found, clearing token');
+            localStorage.removeItem('auth-token');
+          }
+        }
+      },
+
+      clearError: () => set({ error: null }),
+      setLoading: (loading: boolean) => set({ isLoading: loading }),
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
-  },
-  hasPermission: (permission: string) => {
-    const { permissions } = get();
-    return permissions.includes(permission);
-  },
-  hasRole: (role: string) => {
-    const { roles } = get();
-    return roles.includes(role);
-  },
-}));
+  )
+);

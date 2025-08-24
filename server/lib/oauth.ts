@@ -51,7 +51,9 @@ export function initializePassport() {
   }));
 
   // Google OAuth Strategy (only if configured)
-  if (OAUTH_CONFIG.google.clientID && OAUTH_CONFIG.google.clientSecret) {
+  if (OAUTH_CONFIG.google.clientID && OAUTH_CONFIG.google.clientSecret &&
+    OAUTH_CONFIG.google.clientID !== '' && OAUTH_CONFIG.google.clientSecret !== '' &&
+    OAUTH_CONFIG.google.clientID !== 'your-google-client-id' && OAUTH_CONFIG.google.clientSecret !== 'your-google-client-secret') {
     passport.use(new GoogleStrategy(OAUTH_CONFIG.google, async (accessToken, refreshToken, profile, done) => {
       try {
         const oauthProfile: OAuthProfile = {
@@ -73,8 +75,16 @@ export function initializePassport() {
   }
 
   // Facebook OAuth Strategy (only if configured)
-  if (OAUTH_CONFIG.facebook.appID && OAUTH_CONFIG.facebook.appSecret) {
-    passport.use(new FacebookStrategy(OAUTH_CONFIG.facebook, async (accessToken, refreshToken, profile, done) => {
+  if (OAUTH_CONFIG.facebook.appID && OAUTH_CONFIG.facebook.appSecret &&
+    OAUTH_CONFIG.facebook.appID !== '' && OAUTH_CONFIG.facebook.appSecret !== '' &&
+    OAUTH_CONFIG.facebook.appID !== 'your-facebook-app-id' && OAUTH_CONFIG.facebook.appSecret !== 'your-facebook-app-secret') {
+    const facebookConfig = {
+      clientID: OAUTH_CONFIG.facebook.appID,
+      clientSecret: OAUTH_CONFIG.facebook.appSecret,
+      callbackURL: OAUTH_CONFIG.facebook.callbackURL,
+      profileFields: OAUTH_CONFIG.facebook.profileFields
+    };
+    passport.use(new FacebookStrategy(facebookConfig, async (accessToken, refreshToken, profile, done) => {
       try {
         const oauthProfile: OAuthProfile = {
           provider: 'facebook',

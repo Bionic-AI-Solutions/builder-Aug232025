@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiCall } from "@/lib/auth";
 import { type User } from "@shared/schema";
 import {
   Users,
@@ -172,6 +172,9 @@ const mockUserDetails = {
 export default function Admin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Debug logging
+  console.log('Admin page loaded');
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -196,21 +199,30 @@ export default function Admin() {
   };
 
   // Fetch all users for admin panel
-  const { data: users = [] } = useQuery<User[]>({
-    queryKey: ["/api/admin/users"],
+  const { data: usersData, error: usersError } = useQuery({
+    queryKey: ["admin-users"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/users");
-      return response.json();
+      console.log('Fetching admin users...');
+      const result = await apiCall('/admin/users');
+      console.log('Admin users API response:', result);
+      return result;
     },
   });
+
+  const users = usersData?.data?.users || [];
+  console.log('Admin users data:', users);
+  console.log('Admin users error:', usersError);
 
   // User management mutations
   const updateUserMutation = useMutation({
     mutationFn: async ({ userId, updates }: { userId: string; updates: Partial<User> }) => {
-      return apiRequest("PATCH", `/api/admin/users/${userId}`, updates);
+      return apiCall(`/admin/users/${userId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates)
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast({
         title: "User Updated",
         description: "User information has been updated successfully.",
@@ -227,10 +239,12 @@ export default function Admin() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      return apiRequest("DELETE", `/api/admin/users/${userId}`);
+      return apiCall(`/admin/users/${userId}`, {
+        method: 'DELETE'
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast({
         title: "User Deleted",
         description: "User has been removed from the platform.",
@@ -853,9 +867,9 @@ export default function Admin() {
             ].map((activity, index) => (
               <div key={index} className="flex items-start space-x-3 py-3 border-b border-gray-100 last:border-b-0">
                 <div className={`w-2 h-2 rounded-full mt-2 ${activity.type === "user" ? "bg-blue-500" :
-                    activity.type === "deployment" ? "bg-green-500" :
-                      activity.type === "server" ? "bg-purple-500" :
-                        "bg-orange-500"
+                  activity.type === "deployment" ? "bg-green-500" :
+                    activity.type === "server" ? "bg-purple-500" :
+                      "bg-orange-500"
                   }`} />
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">{activity.action}</p>

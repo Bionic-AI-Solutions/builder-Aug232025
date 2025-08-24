@@ -1,9 +1,19 @@
 import { type InsertUser, type Project, type InsertProject, type McpServer, type InsertMcpServer, type ChatMessage, type InsertChatMessage, type MarketplaceApp, type InsertMarketplaceApp, type SocialAccount, type InsertSocialAccount } from "@shared/schema";
-import { type User as AuthUser } from "./lib/auth";
+import { type User as AuthUser, type Persona, type UserRole, type Permission } from "./lib/auth";
 import { randomUUID } from "crypto";
+import { eq } from "drizzle-orm";
+import {
+  llmProviders,
+  llmModels,
+  type LLMProvider,
+  type NewLLMProvider,
+  type LLMModel,
+  type NewLLMModel,
+} from "../shared/schema";
+import { db } from "./db";
 
-// Extended User interface for storage that includes all fields
-interface User extends AuthUser {
+// Storage User interface that extends AuthUser with additional fields
+interface StorageUser extends AuthUser {
   password_hash: string;
   lastLoginAt: Date | null;
 }
@@ -146,13 +156,13 @@ export interface MarketplaceStats {
 
 export interface IStorage {
   // Users
-  getUser(id: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  getUserById(id: string): Promise<User | undefined>;
-  getAllUsers(): Promise<User[]>;
-  getPendingUsers(): Promise<User[]>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+  getUser(id: string): Promise<StorageUser | undefined>;
+  getUserByEmail(email: string): Promise<StorageUser | undefined>;
+  getUserById(id: string): Promise<StorageUser | undefined>;
+  getAllUsers(): Promise<StorageUser[]>;
+  getPendingUsers(): Promise<StorageUser[]>;
+  createUser(user: InsertUser): Promise<StorageUser>;
+  updateUser(id: string, updates: Partial<StorageUser>): Promise<StorageUser | undefined>;
   updateUserPassword(id: string, passwordHash: string): Promise<void>;
   updateUserLastLogin(id: string): Promise<void>;
   approveUser(userId: string, approvedBy: string): Promise<void>;
@@ -221,7 +231,7 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User> = new Map();
+  private users: Map<string, StorageUser> = new Map();
   private socialAccounts: Map<string, SocialAccount> = new Map();
   private projects: Map<string, Project> = new Map();
   private mcpServers: Map<string, McpServer> = new Map();
@@ -238,13 +248,13 @@ export class MemStorage implements IStorage {
 
   private seedData() {
     // Create demo users
-    const demoUser: User = {
+    const demoUser: StorageUser = {
       id: "demo-user-id",
       email: "demo@mcpbuilder.com",
       password_hash: "$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22", // "demo123" hashed
-      persona: "builder",
-      roles: ["builder"],
-      permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
+      persona: "builder" as Persona,
+      roles: ["builder"] as UserRole[],
+      permissions: ["create_project", "edit_project", "publish_project", "view_analytics"] as Permission[],
       metadata: {},
       isActive: true,
       approvalStatus: "approved",
@@ -258,90 +268,112 @@ export class MemStorage implements IStorage {
     this.users.set(demoUser.id, demoUser);
 
     // Additional demo users for admin panel
-    const additionalUsers: User[] = [
+    const additionalUsers: StorageUser[] = [
       {
         id: "user-2",
-        email: "john@example.com",
-        password_hash: "$2b$12$ll0ggtpr6Zw.XMqJuy14A.EkmdaznQsxoet2qEoW.dOXWkqJpEW7W", // "password123" hashed
-        persona: "builder",
-        roles: ["builder"],
-        permissions: ["create_project", "edit_project", "publish_project"],
+        email: "john.doe@example.com",
+        password_hash: "$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22",
+        persona: "end_user" as Persona,
+        roles: ["end_user"] as UserRole[],
+        permissions: ["purchase_project", "view_marketplace"] as Permission[],
         metadata: {},
-        isActive: "true",
+        isActive: true,
         approvalStatus: "approved",
-        approvedBy: "user-4", // Super admin
-        approvedAt: new Date("2024-12-15"),
+        approvedBy: "user-4",
+        approvedAt: new Date(),
+        rejectionReason: undefined,
         lastLoginAt: null,
-        createdAt: new Date("2024-12-15"),
-        updatedAt: new Date("2024-12-15"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         id: "user-3",
-        email: "alice@company.com",
-        password_hash: "$2b$12$ll0ggtpr6Zw.XMqJuy14A.EkmdaznQsxoet2qEoW.dOXWkqJpEW7W", // "password123" hashed
-        persona: "end_user",
-        roles: ["end_user"],
-        permissions: ["purchase_project", "use_widget"],
+        email: "jane.smith@example.com",
+        password_hash: "$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22",
+        persona: "builder" as Persona,
+        roles: ["builder"] as UserRole[],
+        permissions: ["create_project", "edit_project", "publish_project", "view_analytics"] as Permission[],
         metadata: {},
-        isActive: "true",
+        isActive: true,
         approvalStatus: "approved",
-        approvedBy: "user-4", // Super admin
-        approvedAt: new Date("2024-12-14"),
+        approvedBy: "user-4",
+        approvedAt: new Date(),
+        rejectionReason: undefined,
         lastLoginAt: null,
-        createdAt: new Date("2024-12-14"),
-        updatedAt: new Date("2024-12-14"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         id: "user-4",
-        email: "mike@startup.io",
-        password_hash: "$2b$12$ll0ggtpr6Zw.XMqJuy14A.EkmdaznQsxoet2qEoW.dOXWkqJpEW7W", // "password123" hashed
-        persona: "super_admin",
-        roles: ["super_admin"],
-        permissions: ["*"], // Super admin has all permissions
+        email: "admin@builderai.com",
+        password_hash: "$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22",
+        persona: "super_admin" as Persona,
+        roles: ["super_admin"] as UserRole[],
+        permissions: ["manage_users", "manage_marketplace", "view_all_analytics", "approve_users"] as Permission[],
         metadata: {},
-        isActive: "true",
-        approvalStatus: "approved", // Super admin is auto-approved
-        approvedBy: null,
-        approvedAt: new Date("2024-12-13"),
+        isActive: true,
+        approvalStatus: "approved",
+        approvedBy: "user-4",
+        approvedAt: new Date(),
+        rejectionReason: undefined,
         lastLoginAt: null,
-        createdAt: new Date("2024-12-13"),
-        updatedAt: new Date("2024-12-13"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         id: "user-5",
-        email: "emma@design.co",
-        password_hash: "$2b$12$ll0ggtpr6Zw.XMqJuy14A.EkmdaznQsxoet2qEoW.dOXWkqJpEW7W", // "password123" hashed
-        persona: "builder",
-        roles: ["builder"],
-        permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
+        email: "pending@example.com",
+        password_hash: "$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22",
+        persona: "builder" as Persona,
+        roles: ["builder"] as UserRole[],
+        permissions: ["create_project", "edit_project"] as Permission[],
         metadata: {},
-        isActive: "true",
-        approvalStatus: "approved",
-        approvedBy: "user-4", // Super admin
-        approvedAt: new Date("2024-12-12"),
+        isActive: false,
+        approvalStatus: "pending",
+        approvedBy: undefined,
+        approvedAt: undefined,
+        rejectionReason: undefined,
         lastLoginAt: null,
-        createdAt: new Date("2024-12-12"),
-        updatedAt: new Date("2024-12-12"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "user-6",
+        email: "rejected@example.com",
+        password_hash: "$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22",
+        persona: "end_user" as Persona,
+        roles: ["end_user"] as UserRole[],
+        permissions: ["purchase_project"] as Permission[],
+        metadata: {},
+        isActive: false,
+        approvalStatus: "rejected",
+        approvedBy: "user-4",
+        approvedAt: undefined,
+        rejectionReason: "Invalid business information",
+        lastLoginAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
     additionalUsers.forEach(user => this.users.set(user.id, user));
 
     // Add builder user for builder-specific projects
-    const builderUser: User = {
+    const builderUser: StorageUser = {
       id: "user-builder",
       email: "builder@builderai.com",
-      password_hash: "$2b$12$LjBayR399a7o9BFQW6ijSuKVhDFv8jgw4MxWTMwEZyCANJW/83HRO", // "builder123" hashed
-      persona: "builder",
-      roles: ["builder"],
-      permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
+      password_hash: "$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22", // "demo123" hashed
+      persona: "builder" as Persona,
+      roles: ["builder"] as UserRole[],
+      permissions: ["create_project", "edit_project", "publish_project", "view_analytics"] as Permission[],
       metadata: {},
-      isActive: "true",
+      isActive: true,
       approvalStatus: "approved",
       approvedBy: "user-4", // Super admin
-      approvedAt: new Date("2024-12-10"),
+      approvedAt: new Date(),
+      rejectionReason: undefined,
       lastLoginAt: null,
-      createdAt: new Date("2024-12-10"),
-      updatedAt: new Date("2024-12-10"),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     this.users.set(builderUser.id, builderUser);
 
@@ -641,16 +673,16 @@ export class MemStorage implements IStorage {
 
     marketplaceApps.forEach(app => this.marketplaceApps.set(app.id, app));
 
-    // Create demo marketplace projects
+    // Create demo marketplace projects with real data
     const marketplaceProject1: MarketplaceProject = {
       id: "mp-1",
       projectId: "project-1",
       builderId: "user-builder",
-      title: "E-commerce Store",
-      description: "Complete e-commerce solution",
-      price: 4900,
+      title: "E-commerce Store Builder",
+      description: "Complete e-commerce solution with product management, shopping cart, and payment processing. Perfect for online stores.",
+      price: 4900, // $49.00
       category: "business",
-      tags: ["ecommerce", "shopping", "payments"],
+      tags: ["ecommerce", "shopping", "payments", "retail"],
       status: "active",
       featured: true,
       rating: 4.8,
@@ -668,11 +700,11 @@ export class MemStorage implements IStorage {
       id: "mp-2",
       projectId: "project-2",
       builderId: "user-builder",
-      title: "Blog Platform",
-      description: "Modern blogging platform",
-      price: 2900,
+      title: "Blog Platform Pro",
+      description: "Modern blogging platform with content editor, SEO optimization, and social media integration.",
+      price: 2900, // $29.00
       category: "content",
-      tags: ["blogging", "seo", "content"],
+      tags: ["blogging", "seo", "content", "social"],
       status: "active",
       featured: false,
       rating: 4.6,
@@ -690,13 +722,13 @@ export class MemStorage implements IStorage {
       id: "mp-3",
       projectId: "project-3",
       builderId: "user-builder",
-      title: "Booking System",
-      description: "Appointment booking system",
-      price: 3900,
+      title: "Appointment Booking System",
+      description: "Professional appointment booking system with calendar integration, notifications, and payment processing.",
+      price: 3900, // $39.00
       category: "service",
-      tags: ["booking", "appointments", "calendar"],
-      status: "inactive",
-      featured: false,
+      tags: ["booking", "appointments", "calendar", "service"],
+      status: "active",
+      featured: true,
       rating: 4.9,
       reviewCount: 200,
       downloadCount: 2100,
@@ -707,6 +739,72 @@ export class MemStorage implements IStorage {
       builderName: "Builder AI",
     };
     this.marketplaceProjects.set(marketplaceProject3.id, marketplaceProject3);
+
+    const marketplaceProject4: MarketplaceProject = {
+      id: "mp-4",
+      projectId: "project-4",
+      builderId: "user-builder",
+      title: "Restaurant Management",
+      description: "Complete restaurant management system with menu management, order processing, and staff dashboard.",
+      price: 5900, // $59.00
+      category: "business",
+      tags: ["restaurant", "food", "management", "orders"],
+      status: "active",
+      featured: false,
+      rating: 4.7,
+      reviewCount: 95,
+      downloadCount: 750,
+      revenue: 5900,
+      publishedAt: new Date("2024-12-13"),
+      updatedAt: new Date("2024-12-13"),
+      metadata: {},
+      builderName: "Builder AI",
+    };
+    this.marketplaceProjects.set(marketplaceProject4.id, marketplaceProject4);
+
+    const marketplaceProject5: MarketplaceProject = {
+      id: "mp-5",
+      projectId: "project-5",
+      builderId: "user-builder",
+      title: "Fitness Tracker Pro",
+      description: "Personal fitness tracking app with workout plans, progress tracking, and health metrics.",
+      price: 1900, // $19.00
+      category: "health",
+      tags: ["fitness", "health", "tracking", "workouts"],
+      status: "active",
+      featured: false,
+      rating: 4.5,
+      reviewCount: 120,
+      downloadCount: 1800,
+      revenue: 1900,
+      publishedAt: new Date("2024-12-14"),
+      updatedAt: new Date("2024-12-14"),
+      metadata: {},
+      builderName: "Builder AI",
+    };
+    this.marketplaceProjects.set(marketplaceProject5.id, marketplaceProject5);
+
+    const marketplaceProject6: MarketplaceProject = {
+      id: "mp-6",
+      projectId: "project-6",
+      builderId: "user-builder",
+      title: "Real Estate CRM",
+      description: "Customer relationship management system for real estate agents with lead tracking and property management.",
+      price: 6900, // $69.00
+      category: "business",
+      tags: ["real-estate", "crm", "leads", "property"],
+      status: "active",
+      featured: true,
+      rating: 4.8,
+      reviewCount: 75,
+      downloadCount: 450,
+      revenue: 6900,
+      publishedAt: new Date("2024-12-15"),
+      updatedAt: new Date("2024-12-15"),
+      metadata: {},
+      builderName: "Builder AI",
+    };
+    this.marketplaceProjects.set(marketplaceProject6.id, marketplaceProject6);
 
     // Create demo marketplace purchases
     const marketplacePurchase1: MarketplacePurchase = {
@@ -787,32 +885,40 @@ export class MemStorage implements IStorage {
   }
 
   // Users
-  async getUser(id: string): Promise<User | undefined> {
+  async getUser(id: string): Promise<StorageUser | undefined> {
     return this.users.get(id);
   }
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.email === email);
+  async getUserByEmail(email: string): Promise<StorageUser | undefined> {
+    const user = Array.from(this.users.values()).find(user => user.email === email);
+    if (user) {
+      // Convert string isActive to boolean for auth compatibility
+      return {
+        ...user,
+        isActive: user.isActive === true || user.isActive === "true"
+      };
+    }
+    return user;
   }
 
-  async getUserById(id: string): Promise<User | undefined> {
+  async getUserById(id: string): Promise<StorageUser | undefined> {
     return this.users.get(id);
   }
 
-  async getAllUsers(): Promise<User[]> {
+  async getAllUsers(): Promise<StorageUser[]> {
     return Array.from(this.users.values());
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser): Promise<StorageUser> {
     const id = randomUUID();
-    const user: User = {
+    const user: StorageUser = {
       ...insertUser,
       id,
-      persona: insertUser.persona || "builder",
-      roles: Array.isArray(insertUser.roles) ? (insertUser.roles as string[]) : [insertUser.persona || "builder"],
-      permissions: Array.isArray(insertUser.permissions) ? (insertUser.permissions as string[]) : [],
+      persona: (insertUser.persona || "builder") as Persona,
+      roles: Array.isArray(insertUser.roles) ? (insertUser.roles as UserRole[]) : [(insertUser.persona || "builder") as UserRole],
+      permissions: Array.isArray(insertUser.permissions) ? (insertUser.permissions as Permission[]) : [],
       metadata: insertUser.metadata || {},
-      isActive: "true",
+      isActive: true,
       approvalStatus: insertUser.approvalStatus || "pending",
       approvedBy: insertUser.approvedBy,
       approvedAt: insertUser.approvedAt,
@@ -825,7 +931,7 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+  async updateUser(id: string, updates: Partial<StorageUser>): Promise<StorageUser | undefined> {
     const user = this.users.get(id);
     if (!user) return undefined;
 
@@ -850,7 +956,7 @@ export class MemStorage implements IStorage {
     this.users.set(id, updatedUser);
   }
 
-  async getPendingUsers(): Promise<User[]> {
+  async getPendingUsers(): Promise<StorageUser[]> {
     return Array.from(this.users.values()).filter(user => user.approvalStatus === 'pending');
   }
 
@@ -1271,6 +1377,139 @@ export class MemStorage implements IStorage {
     // In a real application, you would persist this event to a database
     // For now, we'll just return it
     return event;
+  }
+}
+
+// ============================================================================
+// LLM PROVIDERS STORAGE
+// ============================================================================
+
+/**
+ * Get all LLM providers
+ */
+export async function getLLMProviders(): Promise<LLMProvider[]> {
+  try {
+    const result = await db.select().from(llmProviders).orderBy(llmProviders.createdAt);
+    return result;
+  } catch (error) {
+    console.error('[STORAGE] Error fetching LLM providers:', error);
+    throw new Error('Failed to fetch LLM providers');
+  }
+}
+
+/**
+ * Get LLM provider by ID
+ */
+export async function getLLMProvider(id: string): Promise<LLMProvider | null> {
+  try {
+    const result = await db.select().from(llmProviders).where(eq(llmProviders.id, id)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error('[STORAGE] Error fetching LLM provider:', error);
+    throw new Error('Failed to fetch LLM provider');
+  }
+}
+
+/**
+ * Create new LLM provider
+ */
+export async function createLLMProvider(provider: NewLLMProvider): Promise<LLMProvider> {
+  try {
+    const result = await db.insert(llmProviders).values(provider).returning();
+    return result[0];
+  } catch (error) {
+    console.error('[STORAGE] Error creating LLM provider:', error);
+    throw new Error('Failed to create LLM provider');
+  }
+}
+
+/**
+ * Update LLM provider
+ */
+export async function updateLLMProvider(id: string, updates: Partial<NewLLMProvider>): Promise<LLMProvider | null> {
+  try {
+    const result = await db
+      .update(llmProviders)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(llmProviders.id, id))
+      .returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error('[STORAGE] Error updating LLM provider:', error);
+    throw new Error('Failed to update LLM provider');
+  }
+}
+
+/**
+ * Delete LLM provider
+ */
+export async function deleteLLMProvider(id: string): Promise<boolean> {
+  try {
+    const result = await db.delete(llmProviders).where(eq(llmProviders.id, id)).returning();
+    return result.length > 0;
+  } catch (error) {
+    console.error('[STORAGE] Error deleting LLM provider:', error);
+    throw new Error('Failed to delete LLM provider');
+  }
+}
+
+/**
+ * Get models for a provider
+ */
+export async function getLLMModels(providerId: string): Promise<LLMModel[]> {
+  try {
+    const result = await db
+      .select()
+      .from(llmModels)
+      .where(eq(llmModels.providerId, providerId))
+      .orderBy(llmModels.createdAt);
+    return result;
+  } catch (error) {
+    console.error('[STORAGE] Error fetching LLM models:', error);
+    throw new Error('Failed to fetch LLM models');
+  }
+}
+
+/**
+ * Create LLM model
+ */
+export async function createLLMModel(model: NewLLMModel): Promise<LLMModel> {
+  try {
+    const result = await db.insert(llmModels).values(model).returning();
+    return result[0];
+  } catch (error) {
+    console.error('[STORAGE] Error creating LLM model:', error);
+    throw new Error('Failed to create LLM model');
+  }
+}
+
+/**
+ * Update LLM model
+ */
+export async function updateLLMModel(id: string, updates: Partial<NewLLMModel>): Promise<LLMModel | null> {
+  try {
+    const result = await db
+      .update(llmModels)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(llmModels.id, id))
+      .returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error('[STORAGE] Error updating LLM model:', error);
+    throw new Error('Failed to update LLM model');
+  }
+}
+
+/**
+ * Delete LLM model
+ */
+export async function deleteLLMModel(id: string): Promise<boolean> {
+  try {
+    const result = await db.delete(llmModels).where(eq(llmModels.id, id)).returning();
+    return result.length > 0;
+  } catch (error) {
+    console.error('[STORAGE] Error deleting LLM model:', error);
+    throw new Error('Failed to delete LLM model');
   }
 }
 
