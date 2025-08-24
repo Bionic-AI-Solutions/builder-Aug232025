@@ -11,7 +11,7 @@ export const users = pgTable("users", {
   roles: jsonb("roles").$type<string[]>().default([]),
   permissions: jsonb("permissions").$type<string[]>().default([]),
   metadata: jsonb("metadata").default({}),
-  isActive: text("is_active").notNull().default("true"),
+  isActive: text("is_active").notNull().default("true"), // Stored as text in DB, converted to boolean in app
   approvalStatus: text("approval_status").notNull().default("pending"), // pending, approved, rejected
   approvedBy: varchar("approved_by").references(() => users.id),
   approvedAt: timestamp("approved_at"),

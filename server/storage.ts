@@ -1,5 +1,148 @@
-import { type User, type InsertUser, type Project, type InsertProject, type McpServer, type InsertMcpServer, type ChatMessage, type InsertChatMessage, type MarketplaceApp, type InsertMarketplaceApp, type SocialAccount, type InsertSocialAccount } from "@shared/schema";
+import { type InsertUser, type Project, type InsertProject, type McpServer, type InsertMcpServer, type ChatMessage, type InsertChatMessage, type MarketplaceApp, type InsertMarketplaceApp, type SocialAccount, type InsertSocialAccount } from "@shared/schema";
+import { type User as AuthUser } from "./lib/auth";
 import { randomUUID } from "crypto";
+
+// Extended User interface for storage that includes all fields
+interface User extends AuthUser {
+  password_hash: string;
+  lastLoginAt: Date | null;
+}
+
+// Marketplace types
+export interface MarketplaceProject {
+  id: string;
+  projectId: string;
+  builderId: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  tags: string[];
+  status: 'active' | 'inactive' | 'suspended' | 'deleted';
+  featured: boolean;
+  rating: number;
+  reviewCount: number;
+  downloadCount: number;
+  revenue: number;
+  publishedAt: Date;
+  updatedAt: Date;
+  metadata: Record<string, any>;
+  builderName?: string;
+}
+
+export interface InsertMarketplaceProject {
+  projectId: string;
+  builderId: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  tags: string[];
+  status?: 'active' | 'inactive' | 'suspended' | 'deleted';
+  featured?: boolean;
+  rating?: number;
+  reviewCount?: number;
+  downloadCount?: number;
+  revenue?: number;
+  metadata?: Record<string, any>;
+}
+
+export interface MarketplacePurchase {
+  id: string;
+  projectId: string;
+  buyerId: string;
+  sellerId: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  transactionId?: string;
+  paymentMethod?: string;
+  purchasedAt: Date;
+  metadata: Record<string, any>;
+  project?: MarketplaceProject;
+}
+
+export interface InsertMarketplacePurchase {
+  projectId: string;
+  buyerId: string;
+  sellerId: string;
+  amount: number;
+  currency?: string;
+  status?: 'pending' | 'completed' | 'failed' | 'refunded';
+  transactionId?: string;
+  paymentMethod?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface MarketplaceReview {
+  id: string;
+  projectId: string;
+  reviewerId: string;
+  rating: number;
+  reviewText: string;
+  helpfulCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InsertMarketplaceReview {
+  projectId: string;
+  reviewerId: string;
+  rating: number;
+  reviewText: string;
+  helpfulCount?: number;
+}
+
+export interface MarketplaceDownload {
+  id: string;
+  projectId: string;
+  userId: string;
+  downloadType: 'purchase' | 'demo' | 'update';
+  downloadedAt: Date;
+  metadata: Record<string, any>;
+}
+
+export interface InsertMarketplaceDownload {
+  projectId: string;
+  userId: string;
+  downloadType?: 'purchase' | 'demo' | 'update';
+  metadata?: Record<string, any>;
+}
+
+export interface MarketplaceQueryOptions {
+  filters?: {
+    status?: string;
+    category?: string;
+    featured?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+    tags?: string[];
+  };
+  sortBy?: 'price' | 'rating' | 'downloads' | 'date';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
+
+export interface MarketplaceQueryResult {
+  projects: MarketplaceProject[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface MarketplaceStats {
+  totalProjects: number;
+  activeProjects: number;
+  totalSales: number;
+  totalRevenue: number;
+  averageRating: number;
+  totalReviews: number;
+}
 
 export interface IStorage {
   // Users
@@ -46,6 +189,35 @@ export interface IStorage {
   getMarketplaceApps(): Promise<MarketplaceApp[]>;
   getMarketplaceApp(id: string): Promise<MarketplaceApp | undefined>;
   createMarketplaceApp(app: InsertMarketplaceApp): Promise<MarketplaceApp>;
+
+  // Marketplace Projects
+  getMarketplaceProjects(options?: MarketplaceQueryOptions): Promise<MarketplaceQueryResult>;
+  getMarketplaceProject(id: string): Promise<MarketplaceProject | undefined>;
+  getMarketplaceProjectByProjectId(projectId: string): Promise<MarketplaceProject | undefined>;
+  createMarketplaceProject(project: InsertMarketplaceProject): Promise<MarketplaceProject>;
+  updateMarketplaceProject(id: string, updates: Partial<MarketplaceProject>): Promise<MarketplaceProject | undefined>;
+  deleteMarketplaceProject(id: string): Promise<boolean>;
+  getFeaturedMarketplaceProjects(): Promise<MarketplaceProject[]>;
+
+  // Marketplace Purchases
+  createMarketplacePurchase(purchase: InsertMarketplacePurchase): Promise<MarketplacePurchase>;
+  getUserPurchase(userId: string, projectId: string): Promise<MarketplacePurchase | undefined>;
+  getUserPurchases(userId: string): Promise<MarketplacePurchase[]>;
+
+  // Marketplace Reviews
+  createMarketplaceReview(review: InsertMarketplaceReview): Promise<MarketplaceReview>;
+  getMarketplaceProjectReviews(projectId: string, options?: { page?: number; limit?: number }): Promise<MarketplaceReview[]>;
+  getUserProjectReview(userId: string, projectId: string): Promise<MarketplaceReview | undefined>;
+
+  // Marketplace Downloads
+  createMarketplaceDownload(download: InsertMarketplaceDownload): Promise<MarketplaceDownload>;
+  generateDownloadToken(projectId: string, userId: string): Promise<string>;
+
+  // Marketplace Analytics
+  getMarketplaceStats(): Promise<MarketplaceStats>;
+
+  // Revenue Events
+  createRevenueEvent(event: any): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -55,6 +227,10 @@ export class MemStorage implements IStorage {
   private mcpServers: Map<string, McpServer> = new Map();
   private chatMessages: Map<string, ChatMessage> = new Map();
   private marketplaceApps: Map<string, MarketplaceApp> = new Map();
+  private marketplaceProjects: Map<string, MarketplaceProject> = new Map();
+  private marketplacePurchases: Map<string, MarketplacePurchase> = new Map();
+  private marketplaceReviews: Map<string, MarketplaceReview> = new Map();
+  private marketplaceDownloads: Map<string, MarketplaceDownload> = new Map();
 
   constructor() {
     this.seedData();
@@ -70,10 +246,11 @@ export class MemStorage implements IStorage {
       roles: ["builder"],
       permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
       metadata: {},
-      isActive: "true",
+      isActive: true,
       approvalStatus: "approved",
       approvedBy: "user-4", // Super admin
       approvedAt: new Date(),
+      rejectionReason: undefined,
       lastLoginAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -463,6 +640,150 @@ export class MemStorage implements IStorage {
     ];
 
     marketplaceApps.forEach(app => this.marketplaceApps.set(app.id, app));
+
+    // Create demo marketplace projects
+    const marketplaceProject1: MarketplaceProject = {
+      id: "mp-1",
+      projectId: "project-1",
+      builderId: "user-builder",
+      title: "E-commerce Store",
+      description: "Complete e-commerce solution",
+      price: 4900,
+      category: "business",
+      tags: ["ecommerce", "shopping", "payments"],
+      status: "active",
+      featured: true,
+      rating: 4.8,
+      reviewCount: 150,
+      downloadCount: 1200,
+      revenue: 4900,
+      publishedAt: new Date("2024-12-10"),
+      updatedAt: new Date("2024-12-10"),
+      metadata: {},
+      builderName: "Builder AI",
+    };
+    this.marketplaceProjects.set(marketplaceProject1.id, marketplaceProject1);
+
+    const marketplaceProject2: MarketplaceProject = {
+      id: "mp-2",
+      projectId: "project-2",
+      builderId: "user-builder",
+      title: "Blog Platform",
+      description: "Modern blogging platform",
+      price: 2900,
+      category: "content",
+      tags: ["blogging", "seo", "content"],
+      status: "active",
+      featured: false,
+      rating: 4.6,
+      reviewCount: 80,
+      downloadCount: 890,
+      revenue: 2900,
+      publishedAt: new Date("2024-12-11"),
+      updatedAt: new Date("2024-12-11"),
+      metadata: {},
+      builderName: "Builder AI",
+    };
+    this.marketplaceProjects.set(marketplaceProject2.id, marketplaceProject2);
+
+    const marketplaceProject3: MarketplaceProject = {
+      id: "mp-3",
+      projectId: "project-3",
+      builderId: "user-builder",
+      title: "Booking System",
+      description: "Appointment booking system",
+      price: 3900,
+      category: "service",
+      tags: ["booking", "appointments", "calendar"],
+      status: "inactive",
+      featured: false,
+      rating: 4.9,
+      reviewCount: 200,
+      downloadCount: 2100,
+      revenue: 3900,
+      publishedAt: new Date("2024-12-12"),
+      updatedAt: new Date("2024-12-12"),
+      metadata: {},
+      builderName: "Builder AI",
+    };
+    this.marketplaceProjects.set(marketplaceProject3.id, marketplaceProject3);
+
+    // Create demo marketplace purchases
+    const marketplacePurchase1: MarketplacePurchase = {
+      id: "mp-purchase-1",
+      projectId: "mp-1",
+      buyerId: "user-3",
+      sellerId: "user-builder",
+      amount: 4900,
+      currency: "USD",
+      status: "completed",
+      transactionId: "txn-123",
+      paymentMethod: "credit_card",
+      purchasedAt: new Date("2024-12-10"),
+      metadata: {},
+    };
+    this.marketplacePurchases.set(marketplacePurchase1.id, marketplacePurchase1);
+
+    const marketplacePurchase2: MarketplacePurchase = {
+      id: "mp-purchase-2",
+      projectId: "mp-2",
+      buyerId: "user-2",
+      sellerId: "user-builder",
+      amount: 2900,
+      currency: "USD",
+      status: "pending",
+      transactionId: "txn-456",
+      paymentMethod: "paypal",
+      purchasedAt: new Date("2024-12-11"),
+      metadata: {},
+    };
+    this.marketplacePurchases.set(marketplacePurchase2.id, marketplacePurchase2);
+
+    // Create demo marketplace reviews
+    const marketplaceReview1: MarketplaceReview = {
+      id: "mp-review-1",
+      projectId: "mp-1",
+      reviewerId: "user-3",
+      rating: 5,
+      reviewText: "Excellent app! Highly recommend.",
+      helpfulCount: 10,
+      createdAt: new Date("2024-12-10"),
+      updatedAt: new Date("2024-12-10"),
+    };
+    this.marketplaceReviews.set(marketplaceReview1.id, marketplaceReview1);
+
+    const marketplaceReview2: MarketplaceReview = {
+      id: "mp-review-2",
+      projectId: "mp-2",
+      reviewerId: "user-2",
+      rating: 4,
+      reviewText: "Good, but could use more features.",
+      helpfulCount: 5,
+      createdAt: new Date("2024-12-11"),
+      updatedAt: new Date("2024-12-11"),
+    };
+    this.marketplaceReviews.set(marketplaceReview2.id, marketplaceReview2);
+
+    // Create demo marketplace downloads
+    const marketplaceDownload1: MarketplaceDownload = {
+      id: "mp-download-1",
+      projectId: "mp-1",
+      userId: "user-3",
+      downloadType: "purchase",
+      downloadedAt: new Date("2024-12-10"),
+      metadata: {},
+    };
+    this.marketplaceDownloads.set(marketplaceDownload1.id, marketplaceDownload1);
+
+    const marketplaceDownload2: MarketplaceDownload = {
+      id: "mp-download-2",
+      projectId: "mp-2",
+      userId: "user-2",
+      downloadType: "demo",
+      downloadedAt: new Date("2024-12-11"),
+      metadata: {},
+    };
+    this.marketplaceDownloads.set(marketplaceDownload2.id, marketplaceDownload2);
   }
 
   // Users
@@ -537,8 +858,8 @@ export class MemStorage implements IStorage {
     const user = this.users.get(userId);
     if (!user) return;
 
-    const updatedUser = { 
-      ...user, 
+    const updatedUser = {
+      ...user,
       approvalStatus: 'approved' as const,
       approvedBy,
       approvedAt: new Date(),
@@ -551,8 +872,8 @@ export class MemStorage implements IStorage {
     const user = this.users.get(userId);
     if (!user) return;
 
-    const updatedUser = { 
-      ...user, 
+    const updatedUser = {
+      ...user,
       approvalStatus: 'rejected' as const,
       approvedBy: rejectedBy,
       approvedAt: new Date(),
@@ -732,6 +1053,224 @@ export class MemStorage implements IStorage {
     };
     this.marketplaceApps.set(id, app);
     return app;
+  }
+
+  // Marketplace Projects
+  async getMarketplaceProjects(options?: MarketplaceQueryOptions): Promise<MarketplaceQueryResult> {
+    let projects = Array.from(this.marketplaceProjects.values());
+
+    if (options?.filters) {
+      if (options.filters.status) {
+        projects = projects.filter(p => p.status === options.filters.status);
+      }
+      if (options.filters.category) {
+        projects = projects.filter(p => p.category === options.filters.category);
+      }
+      if (options.filters.featured !== undefined) {
+        projects = projects.filter(p => p.featured === options.filters.featured);
+      }
+      if (options.filters.minPrice !== undefined) {
+        projects = projects.filter(p => p.price >= options.filters.minPrice);
+      }
+      if (options.filters.maxPrice !== undefined) {
+        projects = projects.filter(p => p.price <= options.filters.maxPrice);
+      }
+      if (options.filters.minRating !== undefined) {
+        projects = projects.filter(p => p.rating >= options.filters.minRating);
+      }
+      if (options.filters.tags && options.filters.tags.length > 0) {
+        projects = projects.filter(p => p.tags.some(tag => options.filters.tags.includes(tag)));
+      }
+    }
+
+    if (options?.sortBy) {
+      projects.sort((a, b) => {
+        if (options.sortOrder === 'asc') {
+          if (options.sortBy === 'price') return a.price - b.price;
+          if (options.sortBy === 'rating') return a.rating - b.rating;
+          if (options.sortBy === 'downloads') return a.downloadCount - b.downloadCount;
+          if (options.sortBy === 'date') return a.publishedAt.getTime() - b.publishedAt.getTime();
+        } else {
+          if (options.sortBy === 'price') return b.price - a.price;
+          if (options.sortBy === 'rating') return b.rating - a.rating;
+          if (options.sortBy === 'downloads') return b.downloadCount - a.downloadCount;
+          if (options.sortBy === 'date') return b.publishedAt.getTime() - a.publishedAt.getTime();
+        }
+        return 0;
+      });
+    }
+
+    const start = (options?.page || 1) * (options?.limit || 10) - (options?.limit || 10);
+    const end = start + (options?.limit || 10);
+    const paginatedProjects = projects.slice(start, end);
+
+    return {
+      projects: paginatedProjects,
+      pagination: {
+        page: options?.page || 1,
+        limit: options?.limit || 10,
+        total: projects.length,
+        totalPages: Math.ceil(projects.length / (options?.limit || 10)),
+      },
+    };
+  }
+
+  async getMarketplaceProject(id: string): Promise<MarketplaceProject | undefined> {
+    return this.marketplaceProjects.get(id);
+  }
+
+  async getMarketplaceProjectByProjectId(projectId: string): Promise<MarketplaceProject | undefined> {
+    return Array.from(this.marketplaceProjects.values()).find(p => p.projectId === projectId);
+  }
+
+  async createMarketplaceProject(project: InsertMarketplaceProject): Promise<MarketplaceProject> {
+    const id = randomUUID();
+    const newProject: MarketplaceProject = {
+      ...project,
+      id,
+      status: project.status || 'active',
+      featured: project.featured || false,
+      rating: project.rating || 0,
+      reviewCount: project.reviewCount || 0,
+      downloadCount: project.downloadCount || 0,
+      revenue: project.revenue || 0,
+      publishedAt: new Date(),
+      updatedAt: new Date(),
+      metadata: project.metadata || {},
+    };
+    this.marketplaceProjects.set(id, newProject);
+    return newProject;
+  }
+
+  async updateMarketplaceProject(id: string, updates: Partial<MarketplaceProject>): Promise<MarketplaceProject | undefined> {
+    const project = this.marketplaceProjects.get(id);
+    if (!project) return undefined;
+
+    const updatedProject = { ...project, ...updates, updatedAt: new Date() };
+    this.marketplaceProjects.set(id, updatedProject);
+    return updatedProject;
+  }
+
+  async deleteMarketplaceProject(id: string): Promise<boolean> {
+    return this.marketplaceProjects.delete(id);
+  }
+
+  async getFeaturedMarketplaceProjects(): Promise<MarketplaceProject[]> {
+    return Array.from(this.marketplaceProjects.values()).filter(p => p.featured);
+  }
+
+  // Marketplace Purchases
+  async createMarketplacePurchase(purchase: InsertMarketplacePurchase): Promise<MarketplacePurchase> {
+    const id = randomUUID();
+    const newPurchase: MarketplacePurchase = {
+      ...purchase,
+      id,
+      status: purchase.status || 'pending',
+      purchasedAt: new Date(),
+      metadata: purchase.metadata || {},
+    };
+    this.marketplacePurchases.set(id, newPurchase);
+    return newPurchase;
+  }
+
+  async getUserPurchase(userId: string, projectId: string): Promise<MarketplacePurchase | undefined> {
+    return Array.from(this.marketplacePurchases.values()).find(p => p.buyerId === userId && p.projectId === projectId);
+  }
+
+  async getUserPurchases(userId: string): Promise<MarketplacePurchase[]> {
+    return Array.from(this.marketplacePurchases.values()).filter(p => p.buyerId === userId);
+  }
+
+  // Marketplace Reviews
+  async createMarketplaceReview(review: InsertMarketplaceReview): Promise<MarketplaceReview> {
+    const id = randomUUID();
+    const newReview: MarketplaceReview = {
+      ...review,
+      id,
+      helpfulCount: review.helpfulCount || 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.marketplaceReviews.set(id, newReview);
+    return newReview;
+  }
+
+  async getMarketplaceProjectReviews(projectId: string, options?: { page?: number; limit?: number }): Promise<MarketplaceReview[]> {
+    const reviews = Array.from(this.marketplaceReviews.values()).filter(r => r.projectId === projectId);
+
+    if (options?.sortBy) {
+      reviews.sort((a, b) => {
+        if (options.sortOrder === 'asc') {
+          if (options.sortBy === 'date') return a.createdAt.getTime() - b.createdAt.getTime();
+          if (options.sortBy === 'rating') return a.rating - b.rating;
+        } else {
+          if (options.sortBy === 'date') return b.createdAt.getTime() - a.createdAt.getTime();
+          if (options.sortBy === 'rating') return b.rating - a.rating;
+        }
+        return 0;
+      });
+    }
+
+    const start = (options?.page || 1) * (options?.limit || 10) - (options?.limit || 10);
+    const end = start + (options?.limit || 10);
+    const paginatedReviews = reviews.slice(start, end);
+
+    return paginatedReviews;
+  }
+
+  async getUserProjectReview(userId: string, projectId: string): Promise<MarketplaceReview | undefined> {
+    return Array.from(this.marketplaceReviews.values()).find(r => r.reviewerId === userId && r.projectId === projectId);
+  }
+
+  // Marketplace Downloads
+  async createMarketplaceDownload(download: InsertMarketplaceDownload): Promise<MarketplaceDownload> {
+    const id = randomUUID();
+    const newDownload: MarketplaceDownload = {
+      ...download,
+      id,
+      downloadedAt: new Date(),
+      metadata: download.metadata || {},
+    };
+    this.marketplaceDownloads.set(id, newDownload);
+    return newDownload;
+  }
+
+  async generateDownloadToken(projectId: string, userId: string): Promise<string> {
+    const id = randomUUID();
+    const download: MarketplaceDownload = {
+      id,
+      projectId,
+      userId,
+      downloadType: "demo", // Default to demo
+      downloadedAt: new Date(),
+      metadata: {},
+    };
+    this.marketplaceDownloads.set(id, download);
+    return id; // Return the ID as the token
+  }
+
+  // Marketplace Analytics
+  async getMarketplaceStats(): Promise<MarketplaceStats> {
+    const projects = Array.from(this.marketplaceProjects.values());
+    const purchases = Array.from(this.marketplacePurchases.values());
+    const reviews = Array.from(this.marketplaceReviews.values());
+    const downloads = Array.from(this.marketplaceDownloads.values());
+
+    return {
+      totalProjects: projects.length,
+      activeProjects: projects.filter(p => p.status === 'active').length,
+      totalSales: purchases.filter(p => p.status === 'completed').length,
+      totalRevenue: purchases.reduce((sum, p) => sum + p.amount, 0),
+      averageRating: reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0,
+      totalReviews: reviews.length,
+    };
+  }
+
+  // Revenue Events
+  async createRevenueEvent(event: any): Promise<any> {
+    // In a real application, you would persist this event to a database
+    // For now, we'll just return it
+    return event;
   }
 }
 

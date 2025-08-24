@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertUserSchema, insertProjectSchema, insertMcpServerSchema, insertChatMessageSchema } from "@shared/schema";
 import authRoutes from "./routes/auth";
 import oauthRoutes from "./routes/oauth";
+import marketplaceRoutes from "./routes/marketplace";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
@@ -16,6 +17,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register OAuth routes
   app.use("/api/auth/oauth", oauthRoutes);
+
+  // Register marketplace routes
+  app.use("/api/marketplace", marketplaceRoutes);
 
   // User routes
   app.get("/api/users/:id", async (req, res) => {
