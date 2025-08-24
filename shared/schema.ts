@@ -5,16 +5,16 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  name: text("name").notNull(),
-  plan: text("plan").notNull().default("free"),
+  password_hash: text("password_hash").notNull(),
   persona: text("persona").notNull().default("builder"), // super_admin, builder, end_user
   roles: jsonb("roles").$type<string[]>().default([]),
   permissions: jsonb("permissions").$type<string[]>().default([]),
   metadata: jsonb("metadata").default({}),
+  isActive: text("is_active").notNull().default("true"),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const projects = pgTable("projects", {

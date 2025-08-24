@@ -5,9 +5,12 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+  updateUserPassword(id: string, passwordHash: string): Promise<void>;
+  updateUserLastLogin(id: string): Promise<void>;
   deleteUser(id: string): Promise<boolean>;
 
   // Projects
@@ -49,16 +52,16 @@ export class MemStorage implements IStorage {
     // Create demo users
     const demoUser: User = {
       id: "demo-user-id",
-      username: "demo",
       email: "demo@mcpbuilder.com",
-      password: "demo123", // In real app, this would be hashed
-      name: "Sarah Johnson",
-      plan: "Professional",
+      password_hash: "$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22", // "demo123" hashed
       persona: "builder",
       roles: ["builder"],
-      permissions: ["create_projects", "publish_to_marketplace", "view_revenue"],
+      permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
       metadata: {},
+      isActive: "true",
+      lastLoginAt: null,
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
     this.users.set(demoUser.id, demoUser);
 
@@ -66,58 +69,74 @@ export class MemStorage implements IStorage {
     const additionalUsers: User[] = [
       {
         id: "user-2",
-        username: "john_dev",
         email: "john@example.com",
-        password: "password123",
-        name: "John Smith",
-        plan: "Free",
+        password_hash: "$2b$12$ll0ggtpr6Zw.XMqJuy14A.EkmdaznQsxoet2qEoW.dOXWkqJpEW7W", // "password123" hashed
         persona: "builder",
         roles: ["builder"],
-        permissions: ["create_projects", "publish_to_marketplace"],
+        permissions: ["create_project", "edit_project", "publish_project"],
         metadata: {},
+        isActive: "true",
+        lastLoginAt: null,
         createdAt: new Date("2024-12-15"),
+        updatedAt: new Date("2024-12-15"),
       },
       {
         id: "user-3",
-        username: "alice_coder",
         email: "alice@company.com",
-        password: "password123",
-        name: "Alice Cooper",
-        plan: "Professional",
+        password_hash: "$2b$12$ll0ggtpr6Zw.XMqJuy14A.EkmdaznQsxoet2qEoW.dOXWkqJpEW7W", // "password123" hashed
         persona: "end_user",
         roles: ["end_user"],
-        permissions: ["purchase_widgets", "manage_widgets", "view_usage"],
+        permissions: ["purchase_project", "use_widget"],
         metadata: {},
+        isActive: "true",
+        lastLoginAt: null,
         createdAt: new Date("2024-12-14"),
+        updatedAt: new Date("2024-12-14"),
       },
       {
         id: "user-4",
-        username: "mike_startup",
         email: "mike@startup.io",
-        password: "password123",
-        name: "Mike Wilson",
-        plan: "Enterprise",
+        password_hash: "$2b$12$ll0ggtpr6Zw.XMqJuy14A.EkmdaznQsxoet2qEoW.dOXWkqJpEW7W", // "password123" hashed
         persona: "super_admin",
         roles: ["super_admin"],
-        permissions: ["manage_users", "view_platform_analytics", "manage_system"],
+        permissions: ["*"], // Super admin has all permissions
         metadata: {},
+        isActive: "true",
+        lastLoginAt: null,
         createdAt: new Date("2024-12-13"),
+        updatedAt: new Date("2024-12-13"),
       },
       {
         id: "user-5",
-        username: "emma_designer",
         email: "emma@design.co",
-        password: "password123",
-        name: "Emma Brown",
-        plan: "Professional",
+        password_hash: "$2b$12$ll0ggtpr6Zw.XMqJuy14A.EkmdaznQsxoet2qEoW.dOXWkqJpEW7W", // "password123" hashed
         persona: "builder",
         roles: ["builder"],
-        permissions: ["create_projects", "publish_to_marketplace", "view_revenue"],
+        permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
         metadata: {},
+        isActive: "true",
+        lastLoginAt: null,
         createdAt: new Date("2024-12-12"),
+        updatedAt: new Date("2024-12-12"),
       },
     ];
     additionalUsers.forEach(user => this.users.set(user.id, user));
+
+    // Add builder user for builder-specific projects
+    const builderUser: User = {
+      id: "user-builder",
+      email: "builder@builderai.com",
+      password_hash: "$2b$12$LjBayR399a7o9BFQW6ijSuKVhDFv8jgw4MxWTMwEZyCANJW/83HRO", // "builder123" hashed
+      persona: "builder",
+      roles: ["builder"],
+      permissions: ["create_project", "edit_project", "publish_project", "view_analytics"],
+      metadata: {},
+      isActive: "true",
+      lastLoginAt: null,
+      createdAt: new Date("2024-12-10"),
+      updatedAt: new Date("2024-12-10"),
+    };
+    this.users.set(builderUser.id, builderUser);
 
     // Create demo projects for demo user
     const projects: Project[] = [
@@ -425,6 +444,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
 
+  async getUserById(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
   }
@@ -434,12 +457,14 @@ export class MemStorage implements IStorage {
     const user: User = {
       ...insertUser,
       id,
-      plan: insertUser.plan || "free",
       persona: insertUser.persona || "builder",
       roles: Array.isArray(insertUser.roles) ? (insertUser.roles as string[]) : [insertUser.persona || "builder"],
       permissions: Array.isArray(insertUser.permissions) ? (insertUser.permissions as string[]) : [],
       metadata: insertUser.metadata || {},
-      createdAt: new Date()
+      isActive: "true",
+      lastLoginAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     this.users.set(id, user);
     return user;
@@ -452,6 +477,22 @@ export class MemStorage implements IStorage {
     const updatedUser = { ...user, ...updates };
     this.users.set(id, updatedUser);
     return updatedUser;
+  }
+
+  async updateUserPassword(id: string, passwordHash: string): Promise<void> {
+    const user = this.users.get(id);
+    if (!user) return;
+
+    const updatedUser = { ...user, password_hash: passwordHash };
+    this.users.set(id, updatedUser);
+  }
+
+  async updateUserLastLogin(id: string): Promise<void> {
+    const user = this.users.get(id);
+    if (!user) return;
+
+    const updatedUser = { ...user, lastLoginAt: new Date() };
+    this.users.set(id, updatedUser);
   }
 
   async deleteUser(id: string): Promise<boolean> {
