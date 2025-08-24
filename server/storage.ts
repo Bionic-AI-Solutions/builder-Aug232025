@@ -12,6 +12,7 @@ export interface IStorage {
 
   // Projects
   getProjects(userId: string): Promise<Project[]>;
+  getAllProjects(): Promise<Project[]>;
   getProject(id: string): Promise<Project | undefined>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined>;
@@ -460,6 +461,10 @@ export class MemStorage implements IStorage {
   // Projects
   async getProjects(userId: string): Promise<Project[]> {
     return Array.from(this.projects.values()).filter(project => project.userId === userId);
+  }
+
+  async getAllProjects(): Promise<Project[]> {
+    return Array.from(this.projects.values());
   }
 
   async getProject(id: string): Promise<Project | undefined> {

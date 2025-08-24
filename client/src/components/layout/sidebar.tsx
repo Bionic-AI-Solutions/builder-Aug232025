@@ -38,6 +38,7 @@ const getNavigation = (persona: string) => {
 
   const adminNavigation = [
     { name: "Admin", href: "/admin", icon: Settings, personas: ['super_admin'] },
+    { name: "MCP Servers", href: "/mcp-servers", icon: Server, personas: ['super_admin'] },
   ];
 
   const allNavigation = [

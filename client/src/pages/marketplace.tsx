@@ -48,11 +48,16 @@ export default function Marketplace() {
 
   // Fetch all projects and filter for published ones
   const { data: allProjects = [], isLoading: projectsLoading } = useQuery({
-    queryKey: ["/api/projects"],
+    queryKey: ["/api/all-projects"],
     queryFn: async () => {
-      const response = await fetch("/api/projects");
-      return response.json();
+      const response = await fetch("/api/all-projects");
+      if (!response.ok) {
+        throw new Error(`Failed to fetch projects: ${response.statusText}`);
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
+    retry: 3,
   });
 
   // Filter for published projects and transform to marketplace format

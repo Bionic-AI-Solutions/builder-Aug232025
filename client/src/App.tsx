@@ -108,6 +108,7 @@ function Router() {
 
       {/* Admin routes */}
       <Route path="/admin" component={() => <PersonaRoute component={Admin} allowedPersonas={['super_admin']} />} />
+      <Route path="/mcp-servers" component={() => <PersonaRoute component={MCPServers} allowedPersonas={['super_admin']} />} />
 
       <Route component={NotFound} />
     </Switch>

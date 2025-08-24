@@ -52,6 +52,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all projects (for Super Admin)
+  app.get("/api/all-projects", async (req, res) => {
+    try {
+      const projects = await storage.getAllProjects();
+      res.json(projects);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch all projects" });
+    }
+  });
+
   app.get("/api/projects/:id", async (req, res) => {
     try {
       const project = await storage.getProject(req.params.id);
