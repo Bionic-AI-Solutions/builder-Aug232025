@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Project, type InsertProject, type McpServer, type InsertMcpServer, type ChatMessage, type InsertChatMessage, type MarketplaceApp, type InsertMarketplaceApp } from "@shared/schema";
+import { type User, type InsertUser, type Project, type InsertProject, type McpServer, type InsertMcpServer, type ChatMessage, type InsertChatMessage, type MarketplaceApp, type InsertMarketplaceApp, type SocialAccount, type InsertSocialAccount } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -15,6 +15,14 @@ export interface IStorage {
   approveUser(userId: string, approvedBy: string): Promise<void>;
   rejectUser(userId: string, rejectedBy: string, reason: string): Promise<void>;
   deleteUser(id: string): Promise<boolean>;
+
+  // Social Accounts (OAuth)
+  getSocialAccount(provider: string, providerUserId: string): Promise<SocialAccount | undefined>;
+  getSocialAccountsByUserId(userId: string): Promise<SocialAccount[]>;
+  createSocialAccount(socialAccount: InsertSocialAccount): Promise<SocialAccount>;
+  updateSocialAccount(id: string, updates: Partial<SocialAccount>): Promise<SocialAccount | undefined>;
+  deleteSocialAccount(id: string): Promise<boolean>;
+  linkSocialAccount(userId: string, provider: string, providerUserId: string, profileData: any): Promise<SocialAccount>;
 
   // Projects
   getProjects(userId: string): Promise<Project[]>;
@@ -42,6 +50,7 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private users: Map<string, User> = new Map();
+  private socialAccounts: Map<string, SocialAccount> = new Map();
   private projects: Map<string, Project> = new Map();
   private mcpServers: Map<string, McpServer> = new Map();
   private chatMessages: Map<string, ChatMessage> = new Map();
@@ -551,6 +560,53 @@ export class MemStorage implements IStorage {
       updatedAt: new Date()
     };
     this.users.set(userId, updatedUser);
+  }
+
+  // Social Accounts (OAuth)
+  async getSocialAccount(provider: string, providerUserId: string): Promise<SocialAccount | undefined> {
+    return Array.from(this.socialAccounts.values()).find(
+      account => account.provider === provider && account.providerUserId === providerUserId
+    );
+  }
+
+  async getSocialAccountsByUserId(userId: string): Promise<SocialAccount[]> {
+    return Array.from(this.socialAccounts.values()).filter(account => account.userId === userId);
+  }
+
+  async createSocialAccount(socialAccount: InsertSocialAccount): Promise<SocialAccount> {
+    const id = randomUUID();
+    const account: SocialAccount = {
+      ...socialAccount,
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.socialAccounts.set(id, account);
+    return account;
+  }
+
+  async updateSocialAccount(id: string, updates: Partial<SocialAccount>): Promise<SocialAccount | undefined> {
+    const account = this.socialAccounts.get(id);
+    if (!account) return undefined;
+
+    const updatedAccount = { ...account, ...updates, updatedAt: new Date() };
+    this.socialAccounts.set(id, updatedAccount);
+    return updatedAccount;
+  }
+
+  async deleteSocialAccount(id: string): Promise<boolean> {
+    return this.socialAccounts.delete(id);
+  }
+
+  async linkSocialAccount(userId: string, provider: string, providerUserId: string, profileData: any): Promise<SocialAccount> {
+    const socialAccount: InsertSocialAccount = {
+      userId,
+      provider,
+      providerUserId,
+      profileData,
+    };
+
+    return await this.createSocialAccount(socialAccount);
   }
 
   async deleteUser(id: string): Promise<boolean> {

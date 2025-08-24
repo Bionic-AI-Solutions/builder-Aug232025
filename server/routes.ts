@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertProjectSchema, insertMcpServerSchema, insertChatMessageSchema } from "@shared/schema";
 import authRoutes from "./routes/auth";
+import oauthRoutes from "./routes/oauth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
@@ -12,6 +13,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register authentication routes
   app.use("/api/auth", authRoutes);
+  
+  // Register OAuth routes
+  app.use("/api/auth/oauth", oauthRoutes);
 
   // User routes
   app.get("/api/users/:id", async (req, res) => {

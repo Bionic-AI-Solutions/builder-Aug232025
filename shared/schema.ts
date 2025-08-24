@@ -6,7 +6,7 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull().unique(),
-  password_hash: text("password_hash").notNull(),
+  password_hash: text("password_hash"), // Optional for OAuth users
   persona: text("persona").notNull().default("builder"), // super_admin, builder, end_user
   roles: jsonb("roles").$type<string[]>().default([]),
   permissions: jsonb("permissions").$type<string[]>().default([]),
@@ -17,6 +17,20 @@ export const users = pgTable("users", {
   approvedAt: timestamp("approved_at"),
   rejectionReason: text("rejection_reason"),
   lastLoginAt: timestamp("last_login_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// OAuth social accounts table
+export const socialAccounts = pgTable("social_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(), // 'google', 'facebook'
+  providerUserId: text("provider_user_id").notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  profileData: jsonb("profile_data").default({}),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -168,9 +182,17 @@ export const insertUsageEventSchema = createInsertSchema(usageEvents).omit({
   createdAt: true,
 });
 
+export const insertSocialAccountSchema = createInsertSchema(socialAccounts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type SocialAccount = typeof socialAccounts.$inferSelect;
+export type InsertSocialAccount = z.infer<typeof insertSocialAccountSchema>;
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
