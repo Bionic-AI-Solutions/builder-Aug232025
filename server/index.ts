@@ -1,8 +1,15 @@
 import express, { type Request, Response, NextFunction } from "express";
+import passport from "passport";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializePassport } from "./lib/oauth";
 
 const app = express();
+
+// Initialize Passport for OAuth
+initializePassport();
+app.use(passport.initialize());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

@@ -2,6 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertProjectSchema, insertMcpServerSchema, insertChatMessageSchema } from "@shared/schema";
+import authRoutes from "./routes/auth";
+import oauthRoutes from "./routes/oauth";
+import marketplaceRoutes from "./routes/marketplace";
+import llmRoutes from "./routes/llms";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
@@ -9,21 +13,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // Auth routes
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      const user = await storage.getUserByEmail(email);
+  // Register authentication routes
+  app.use("/api/auth", authRoutes);
 
-      if (!user || user.password !== password) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
+  // Register OAuth routes
+  app.use("/api/auth/oauth", oauthRoutes);
 
-      res.json({ user: { ...user, password: undefined } });
-    } catch (error) {
-      res.status(500).json({ error: "Login failed" });
-    }
-  });
+  // Register marketplace routes
+  app.use("/api/marketplace", marketplaceRoutes);
+
+  // Register LLM routes
+  app.use("/api/llms", llmRoutes);
 
   // User routes
   app.get("/api/users/:id", async (req, res) => {
@@ -49,6 +49,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(projects);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch projects" });
+    }
+  });
+
+  // Get all projects (for Super Admin)
+  app.get("/api/all-projects", async (req, res) => {
+    try {
+      const projects = await storage.getAllProjects();
+      res.json(projects);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch all projects" });
     }
   });
 

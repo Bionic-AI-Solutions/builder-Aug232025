@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -9,21 +9,24 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { type Project } from "@shared/schema";
-import { 
-  Calendar, 
-  Cpu, 
-  Server, 
-  FileText, 
-  Download, 
+import {
+  Calendar,
+  Cpu,
+  Server,
+  FileText,
+  Download,
   MessageCircle,
   ExternalLink,
   X,
   Upload,
-  CheckCircle
+  CheckCircle,
+  DollarSign
 } from "lucide-react";
 
 interface ProjectDetailsModalProps {
@@ -32,14 +35,19 @@ interface ProjectDetailsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function ProjectDetailsModal({ 
-  project, 
-  open, 
-  onOpenChange 
+export default function ProjectDetailsModal({
+  project,
+  open,
+  onOpenChange
 }: ProjectDetailsModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDeploying, setIsDeploying] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [publishPrice, setPublishPrice] = useState("");
+  const [publishDescription, setPublishDescription] = useState("");
+  const [isProjectModified, setIsProjectModified] = useState(false);
+  const [lastPublishedState, setLastPublishedState] = useState<string>("");
 
   const publishProjectMutation = useMutation({
     mutationFn: async (projectId: string) => {
@@ -64,53 +72,84 @@ export default function ProjectDetailsModal({
   });
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="status-completed">✅ Completed</Badge>;
-      case "testing":
-        return <Badge className="status-testing">🔄 Testing</Badge>;
-      case "development":
-        return <Badge className="status-development">🔄 Development</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
+    if (status === "completed") return <Badge className="bg-green-100 text-green-800">✅ Completed</Badge>;
+    if (status === "testing") return <Badge className="bg-yellow-100 text-yellow-800">🧪 Testing</Badge>;
+    if (status === "development") return <Badge className="bg-blue-100 text-blue-800">🔧 Development</Badge>;
+    if (status === "published") return <Badge className="bg-purple-100 text-purple-800">📦 Published</Badge>;
+    return <Badge className="bg-gray-100 text-gray-800">❓ Unknown</Badge>;
+  };
+
+  // Check if project has been modified since last publish
+  const checkProjectModifications = () => {
+    if (!project) return;
+
+    const currentState = JSON.stringify({
+      name: project.name,
+      description: project.description,
+      prompt: project.prompt,
+      mcpServers: project.mcpServers,
+      files: project.files?.map((f: any) => f.name + f.size)
+    });
+
+    if (lastPublishedState && currentState !== lastPublishedState) {
+      setIsProjectModified(true);
+    } else if (lastPublishedState && currentState === lastPublishedState) {
+      setIsProjectModified(false);
     }
   };
 
-  const handlePublish = async () => {
-    if (project.status !== "completed") {
-      toast({
-        title: "Cannot Publish",
-        description: "Only completed projects can be published to the marketplace.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Check modifications when project changes
+  useEffect(() => {
+    checkProjectModifications();
+  }, [project, lastPublishedState]);
 
-    if ((project as any).published === "true") {
-      toast({
-        title: "Already Published",
-        description: "This project is already published to the marketplace.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handlePublish = () => {
+    setShowPricingModal(true);
+  };
 
-    setIsDeploying(true);
-    try {
-      await publishProjectMutation.mutateAsync(project.id);
-    } catch (error) {
-      // Error handled by mutation
-    }
+  const handlePublishSubmit = () => {
+    if (!project || !publishPrice) return;
+
+    // Update project status to published
+    const updatedProject = {
+      ...project,
+      published: "true",
+      marketplacePrice: parseFloat(publishPrice),
+      marketplaceDescription: publishDescription
+    };
+
+    // Set the published state for modification tracking
+    const publishedState = JSON.stringify({
+      name: updatedProject.name,
+      description: updatedProject.description,
+      prompt: updatedProject.prompt,
+      mcpServers: updatedProject.mcpServers,
+      files: updatedProject.files?.map((f: any) => f.name + f.size)
+    });
+
+    setLastPublishedState(publishedState);
+    setIsProjectModified(false);
+
+    // Add to marketplace (in a real app, this would be an API call)
+    console.log("Adding to marketplace:", updatedProject);
+
+    // Close modal and reset form
+    setShowPricingModal(false);
+    setPublishPrice("");
+    setPublishDescription("");
+
+    // Close the main modal
+    onOpenChange(false);
   };
 
   const getTotalFileSize = () => {
     if (!project.files || project.files.length === 0) return "0kb";
-    
+
     const totalSize = project.files.reduce((total, file) => {
       const size = parseFloat(file.size.replace(/[^\d.]/g, ''));
       return total + size;
     }, 0);
-    
+
     return `${totalSize.toFixed(1)}kb`;
   };
 
@@ -224,8 +263,8 @@ export default function ProjectDetailsModal({
             <div>
               <label className="text-sm font-medium text-gray-700">Progress</label>
               <p className="text-gray-900 font-semibold mt-1">
-                {project.status === "completed" ? "100%" : 
-                 project.status === "testing" ? "85%" : "60%"}
+                {project.status === "completed" ? "100%" :
+                  project.status === "testing" ? "85%" : "60%"}
               </p>
             </div>
           </div>
@@ -274,8 +313,8 @@ export default function ProjectDetailsModal({
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Project Files</label>
-                <p className="text-xs text-gray-500 mt-1">Files generated during development</p>
+                <label className="text-sm font-medium text-gray-700">RAG Knowledge Base</label>
+                <p className="text-xs text-gray-500 mt-1">Knowledge content for chatbot context</p>
               </div>
               <div className="text-right">
                 <span className="text-sm text-gray-600">
@@ -283,13 +322,13 @@ export default function ProjectDetailsModal({
                 </span>
               </div>
             </div>
-            
+
             {!project.files || project.files.length === 0 ? (
               <Card className="border-dashed border-gray-300 bg-gray-50">
                 <CardContent className="p-6 text-center">
                   <FileText size={32} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-500 text-sm">No files generated yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Files will appear here once the project is built</p>
+                  <p className="text-gray-500 text-sm">No knowledge files uploaded yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Upload knowledge content to provide context for your chatbot</p>
                 </CardContent>
               </Card>
             ) : (
@@ -307,15 +346,15 @@ export default function ProjectDetailsModal({
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
                               <p className="font-medium text-gray-900">{file.name}</p>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className={`text-xs ${getFileTypeColor(file.type)}`}
                               >
                                 {file.type.toUpperCase()}
                               </Badge>
                             </div>
                             <p className="text-sm text-gray-500 mt-1">
-                              Created during project generation • {file.size}
+                              Knowledge content for chatbot context • {file.size}
                             </p>
                           </div>
                         </div>
@@ -345,7 +384,7 @@ export default function ProjectDetailsModal({
                     </CardContent>
                   </Card>
                 ))}
-                
+
                 {/* File Summary */}
                 <Card className="bg-blue-50 border-blue-200">
                   <CardContent className="p-3">
@@ -353,11 +392,11 @@ export default function ProjectDetailsModal({
                       <div className="flex items-center">
                         <FileText size={16} className="mr-2 text-blue-600" />
                         <span className="text-blue-900 font-medium">
-                          Files Summary
+                          Knowledge Base Summary
                         </span>
                       </div>
                       <div className="text-blue-700">
-                        <span className="font-medium">{project.files?.length || 0}</span> files • 
+                        <span className="font-medium">{project.files?.length || 0}</span> files •
                         <span className="font-medium">{getTotalFileSize()}</span> total
                       </div>
                     </div>
@@ -386,23 +425,23 @@ export default function ProjectDetailsModal({
             {(project as any).published === "true" ? (
               <Button
                 disabled
-                className="bg-green-100 text-green-700 cursor-not-allowed"
+                className="bg-green-600 hover:bg-green-700"
                 data-testid="button-published-project"
               >
-                <CheckCircle size={16} className="mr-2" />
-                Published
+                <CheckCircle size={16} className="mr-2" /> Published to Marketplace
               </Button>
             ) : (
               <Button
                 onClick={handlePublish}
-                disabled={isDeploying || project.status !== "completed"}
+                disabled={project.status !== "completed" || ((project as any).published === "true" && !isProjectModified)}
                 data-testid="button-publish-project"
+                className="bg-green-600 hover:bg-green-700"
               >
                 <Upload size={16} className="mr-2" />
-                {isDeploying ? "Publishing..." : "Publish"}
+                {(project as any).published === "true" ? "Republish to Marketplace" : "Publish to Marketplace"}
               </Button>
             )}
-            
+
             <Button
               variant="outline"
               data-testid="button-chat-with-project"
@@ -410,7 +449,7 @@ export default function ProjectDetailsModal({
               <MessageCircle size={16} className="mr-2" />
               Chat
             </Button>
-            
+
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
@@ -421,6 +460,98 @@ export default function ProjectDetailsModal({
           </div>
         </div>
       </DialogContent>
+
+      {/* Pricing Modal */}
+      <Dialog open={showPricingModal} onOpenChange={setShowPricingModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Publish to Marketplace
+            </DialogTitle>
+            <DialogDescription>
+              Set the price for your app in the marketplace. Super Admin will add a base fee to this price.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-2">App Details</h4>
+              <p className="text-sm text-blue-800">
+                <strong>Name:</strong> {project.name}
+              </p>
+              <p className="text-sm text-blue-800">
+                <strong>LLM:</strong> {project.llm.charAt(0).toUpperCase() + project.llm.slice(1)}
+              </p>
+              <p className="text-sm text-blue-800">
+                <strong>Files:</strong> {project.files?.length || 0} files
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="publish-price-modal" className="text-sm font-medium">
+                Your Price (USD)
+              </Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  id="publish-price-modal"
+                  type="number"
+                  placeholder="0.00"
+                  value={publishPrice}
+                  onChange={(e) => setPublishPrice(e.target.value)}
+                  className="pl-8"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <p className="text-xs text-gray-500">
+                This is your base price. Super Admin will add platform fees.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="publish-description-modal" className="text-sm font-medium">
+                Marketplace Description
+              </Label>
+              <textarea
+                id="publish-description-modal"
+                value={publishDescription}
+                onChange={(e) => setPublishDescription(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-md text-sm"
+                rows={4}
+                placeholder="Describe your app for potential buyers..."
+              />
+            </div>
+
+            <div className="bg-yellow-50 p-3 rounded-lg">
+              <h5 className="font-medium text-yellow-900 mb-1">Pricing Information</h5>
+              <ul className="text-xs text-yellow-800 space-y-1">
+                <li>• Your price: ${publishPrice || '0.00'}</li>
+                <li>• Platform fee: +$10.00 (set by Super Admin)</li>
+                <li>• Total marketplace price: ${(parseFloat(publishPrice) || 0) + 10}</li>
+              </ul>
+            </div>
+
+            <div className="flex space-x-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowPricingModal(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handlePublishSubmit}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                <Upload size={16} className="mr-2" />
+                Publish to Marketplace
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
