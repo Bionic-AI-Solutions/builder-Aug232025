@@ -259,68 +259,86 @@ async function seedInitialData() {
   console.log('🌱 Seeding initial data...');
 
   try {
-    // Check if we already have users
-    const result = await db.execute(`SELECT COUNT(*) as count FROM users;`);
-    const userCount = parseInt(result[0].count as string);
+    // Always ensure default demo users exist
+    console.log('📝 Ensuring default demo users exist...');
 
-    if (userCount === 0) {
-      console.log('📝 Creating initial users...');
+    const defaultUsers = [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'admin@builderai.com',
+        password_hash: '$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22', // demo123
+        persona: 'super_admin',
+        roles: '["super_admin"]',
+        permissions: '["manage_users", "manage_marketplace", "view_all_analytics", "approve_users"]',
+        display_name: 'Super Admin'
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        email: 'builder@builderai.com',
+        password_hash: '$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22', // demo123
+        persona: 'builder',
+        roles: '["builder"]',
+        permissions: '["create_project", "edit_project", "publish_project", "view_analytics"]',
+        display_name: 'Builder'
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440002',
+        email: 'john.doe@example.com',
+        password_hash: '$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22', // demo123
+        persona: 'end_user',
+        roles: '["end_user"]',
+        permissions: '["purchase_project", "view_marketplace"]',
+        display_name: 'End User'
+      }
+    ];
 
-      // Create Super Admin
-      await db.execute(`
-        INSERT INTO users (id, email, password_hash, persona, roles, permissions, is_active, approval_status, created_at, updated_at)
-        VALUES (
-          '550e8400-e29b-41d4-a716-446655440000',
-          'admin@builderai.com',
-          '$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22',
-          'super_admin',
-          '["super_admin"]'::jsonb,
-          '["manage_users", "manage_marketplace", "view_all_analytics", "approve_users"]'::jsonb,
-          'true',
-          'approved',
-          NOW(),
-          NOW()
-        );
+    for (const user of defaultUsers) {
+      // Check if user exists
+      const existingUser = await db.execute(`
+        SELECT id FROM users WHERE email = '${user.email}';
       `);
 
-      // Create Builder
-      await db.execute(`
-        INSERT INTO users (id, email, password_hash, persona, roles, permissions, is_active, approval_status, created_at, updated_at)
-        VALUES (
-          '550e8400-e29b-41d4-a716-446655440001',
-          'builder@builderai.com',
-          '$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22',
-          'builder',
-          '["builder"]'::jsonb,
-          '["create_project", "edit_project", "publish_project", "view_analytics"]'::jsonb,
-          'true',
-          'approved',
-          NOW(),
-          NOW()
-        );
-      `);
-
-      // Create End User
-      await db.execute(`
-        INSERT INTO users (id, email, password_hash, persona, roles, permissions, is_active, approval_status, created_at, updated_at)
-        VALUES (
-          '550e8400-e29b-41d4-a716-446655440002',
-          'user@builderai.com',
-          '$2b$12$Qdcg6ig8aPq1dONSzq.qJOGPg5RiH0sD2UWv4EeMYdyX2DsZVLB22',
-          'end_user',
-          '["end_user"]'::jsonb,
-          '["purchase_project", "view_marketplace"]'::jsonb,
-          'true',
-          'approved',
-          NOW(),
-          NOW()
-        );
-      `);
-
-      console.log('✅ Initial users created successfully!');
-    } else {
-      console.log(`ℹ️  Found ${userCount} existing users, skipping seed data.`);
+      if (existingUser.length === 0) {
+        // Create user if doesn't exist
+        await db.execute(`
+          INSERT INTO users (id, email, password_hash, persona, roles, permissions, is_active, approval_status, created_at, updated_at)
+          VALUES (
+            '${user.id}',
+            '${user.email}',
+            '${user.password_hash}',
+            '${user.persona}',
+            '${user.roles}'::jsonb,
+            '${user.permissions}'::jsonb,
+            'true',
+            'approved',
+            NOW(),
+            NOW()
+          );
+        `);
+        console.log(`✅ Created ${user.display_name}: ${user.email}`);
+      } else {
+        // Update existing user to ensure correct settings
+        await db.execute(`
+          UPDATE users SET
+            password_hash = '${user.password_hash}',
+            persona = '${user.persona}',
+            roles = '${user.roles}'::jsonb,
+            permissions = '${user.permissions}'::jsonb,
+            is_active = 'true',
+            approval_status = 'approved',
+            updated_at = NOW()
+          WHERE email = '${user.email}';
+        `);
+        console.log(`🔄 Updated ${user.display_name}: ${user.email}`);
+      }
     }
+
+    console.log('✅ Default demo users are ready!');
+    console.log('');
+    console.log('👥 Demo Users:');
+    console.log('👑 Super Admin: admin@builderai.com / demo123');
+    console.log('🛠️  Builder: builder@builderai.com / demo123');
+    console.log('🎯 End User: john.doe@example.com / demo123');
 
   } catch (error) {
     console.error('❌ Seeding failed:', error);
@@ -341,8 +359,12 @@ async function main() {
     console.log('📊 Migration Summary:');
     console.log('✅ All tables created');
     console.log('✅ Indexes optimized');
-    console.log('✅ Initial data seeded');
-    console.log('✅ Ready for PostgreSQL storage');
+    console.log('✅ Default demo users created/updated');
+    console.log('');
+    console.log('👥 Default Demo Users (Always Available):');
+    console.log('👑 Super Admin: admin@builderai.com / demo123');
+    console.log('🛠️  Builder: builder@builderai.com / demo123');
+    console.log('🎯 End User: john.doe@example.com / demo123');
     console.log('');
     console.log('🚀 Next step: Update storage layer to use PostgreSQL');
 

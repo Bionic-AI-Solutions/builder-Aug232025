@@ -316,14 +316,14 @@ export class PostgresStorage implements IStorage {
       roles: (user.roles as UserRole[]) || [],
       permissions: (user.permissions as Permission[]) || [],
       metadata: user.metadata || {},
-      isActive: user.is_active === 'true',
-      approvalStatus: user.approval_status as 'pending' | 'approved' | 'rejected',
-      approvedBy: user.approved_by || undefined,
-      approvedAt: user.approved_at || undefined,
-      rejectionReason: user.rejection_reason || undefined,
-      lastLoginAt: user.last_login_at || null,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
+      isActive: String(user.isActive).toLowerCase() === 'true',
+      approvalStatus: user.approvalStatus as 'pending' | 'approved' | 'rejected',
+      approvedBy: user.approvedBy || undefined,
+      approvedAt: user.approvedAt || undefined,
+      rejectionReason: user.rejectionReason || undefined,
+      lastLoginAt: user.lastLoginAt || null,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 
@@ -332,6 +332,7 @@ export class PostgresStorage implements IStorage {
     if (result.length === 0) return undefined;
 
     const user = result[0];
+
     return {
       id: user.id,
       email: user.email,
@@ -340,14 +341,14 @@ export class PostgresStorage implements IStorage {
       roles: (user.roles as UserRole[]) || [],
       permissions: (user.permissions as Permission[]) || [],
       metadata: user.metadata || {},
-      isActive: user.is_active === 'true',
-      approvalStatus: user.approval_status as 'pending' | 'approved' | 'rejected',
-      approvedBy: user.approved_by || undefined,
-      approvedAt: user.approved_at || undefined,
-      rejectionReason: user.rejection_reason || undefined,
-      lastLoginAt: user.last_login_at || null,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
+      isActive: String(user.isActive).toLowerCase() === 'true',
+      approvalStatus: user.approvalStatus as 'pending' | 'approved' | 'rejected',
+      approvedBy: user.approvedBy || undefined,
+      approvedAt: user.approvedAt || undefined,
+      rejectionReason: user.rejectionReason || undefined,
+      lastLoginAt: user.lastLoginAt || null,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 
@@ -356,7 +357,7 @@ export class PostgresStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<StorageUser[]> {
-    const result = await db.select().from(users).orderBy(desc(users.created_at));
+    const result = await db.select().from(users).orderBy(desc(users.createdAt));
 
     return result.map(user => ({
       id: user.id,
@@ -366,21 +367,21 @@ export class PostgresStorage implements IStorage {
       roles: (user.roles as UserRole[]) || [],
       permissions: (user.permissions as Permission[]) || [],
       metadata: user.metadata || {},
-      isActive: user.is_active === 'true',
-      approvalStatus: user.approval_status as 'pending' | 'approved' | 'rejected',
-      approvedBy: user.approved_by || undefined,
-      approvedAt: user.approved_at || undefined,
-      rejectionReason: user.rejection_reason || undefined,
-      lastLoginAt: user.last_login_at || null,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
+      isActive: String(user.isActive).toLowerCase() === 'true',
+      approvalStatus: user.approvalStatus as 'pending' | 'approved' | 'rejected',
+      approvedBy: user.approvedBy || undefined,
+      approvedAt: user.approvedAt || undefined,
+      rejectionReason: user.rejectionReason || undefined,
+      lastLoginAt: user.lastLoginAt || null,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     }));
   }
 
   async getPendingUsers(): Promise<StorageUser[]> {
     const result = await db.select().from(users)
-      .where(eq(users.approval_status, 'pending'))
-      .orderBy(desc(users.created_at));
+      .where(eq(users.approvalStatus, 'pending'))
+      .orderBy(desc(users.createdAt));
 
     return result.map(user => ({
       id: user.id,
@@ -390,14 +391,14 @@ export class PostgresStorage implements IStorage {
       roles: (user.roles as UserRole[]) || [],
       permissions: (user.permissions as Permission[]) || [],
       metadata: user.metadata || {},
-      isActive: user.is_active === 'true',
-      approvalStatus: user.approval_status as 'pending' | 'approved' | 'rejected',
-      approvedBy: user.approved_by || undefined,
-      approvedAt: user.approved_at || undefined,
-      rejectionReason: user.rejection_reason || undefined,
-      lastLoginAt: user.last_login_at || null,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
+      isActive: String(user.isActive).toLowerCase() === 'true',
+      approvalStatus: user.approvalStatus as 'pending' | 'approved' | 'rejected',
+      approvedBy: user.approvedBy || undefined,
+      approvedAt: user.approvedAt || undefined,
+      rejectionReason: user.rejectionReason || undefined,
+      lastLoginAt: user.lastLoginAt || null,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     }));
   }
 
@@ -426,14 +427,14 @@ export class PostgresStorage implements IStorage {
       roles: (newUser.roles as UserRole[]) || [],
       permissions: (newUser.permissions as Permission[]) || [],
       metadata: newUser.metadata || {},
-      isActive: newUser.is_active === 'true',
-      approvalStatus: newUser.approval_status as 'pending' | 'approved' | 'rejected',
-      approvedBy: newUser.approved_by || undefined,
-      approvedAt: newUser.approved_at || undefined,
-      rejectionReason: newUser.rejection_reason || undefined,
-      lastLoginAt: newUser.last_login_at || null,
-      createdAt: newUser.created_at,
-      updatedAt: newUser.updated_at,
+      isActive: String(newUser.isActive).toLowerCase() === 'true',
+      approvalStatus: newUser.approvalStatus as 'pending' | 'approved' | 'rejected',
+      approvedBy: newUser.approvedBy || undefined,
+      approvedAt: newUser.approvedAt || undefined,
+      rejectionReason: newUser.rejectionReason || undefined,
+      lastLoginAt: newUser.lastLoginAt || null,
+      createdAt: newUser.createdAt,
+      updatedAt: newUser.updatedAt,
     };
   }
 
@@ -451,8 +452,8 @@ export class PostgresStorage implements IStorage {
     if (updates.approvedBy !== undefined) updateData.approved_by = updates.approvedBy;
     if (updates.approvedAt !== undefined) updateData.approved_at = updates.approvedAt;
     if (updates.rejectionReason !== undefined) updateData.rejection_reason = updates.rejectionReason;
-    if (updates.lastLoginAt !== undefined) updateData.last_login_at = updates.lastLoginAt;
-    updateData.updated_at = new Date();
+    if (updates.lastLoginAt !== undefined) updateData.lastLoginAt = updates.lastLoginAt;
+    updateData.updatedAt = new Date();
 
     const result = await db.update(users)
       .set(updateData)
@@ -470,14 +471,14 @@ export class PostgresStorage implements IStorage {
       roles: (user.roles as UserRole[]) || [],
       permissions: (user.permissions as Permission[]) || [],
       metadata: user.metadata || {},
-      isActive: user.is_active === 'true',
-      approvalStatus: user.approval_status as 'pending' | 'approved' | 'rejected',
-      approvedBy: user.approved_by || undefined,
-      approvedAt: user.approved_at || undefined,
-      rejectionReason: user.rejection_reason || undefined,
-      lastLoginAt: user.last_login_at || null,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
+      isActive: String(user.isActive).toLowerCase() === 'true',
+      approvalStatus: user.approvalStatus as 'pending' | 'approved' | 'rejected',
+      approvedBy: user.approvedBy || undefined,
+      approvedAt: user.approvedAt || undefined,
+      rejectionReason: user.rejectionReason || undefined,
+      lastLoginAt: user.lastLoginAt || null,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 
@@ -485,7 +486,7 @@ export class PostgresStorage implements IStorage {
     await db.update(users)
       .set({
         password_hash: passwordHash,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(users.id, id));
   }
@@ -493,8 +494,8 @@ export class PostgresStorage implements IStorage {
   async updateUserLastLogin(id: string): Promise<void> {
     await db.update(users)
       .set({
-        last_login_at: new Date(),
-        updated_at: new Date()
+        lastLoginAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(users.id, id));
   }
