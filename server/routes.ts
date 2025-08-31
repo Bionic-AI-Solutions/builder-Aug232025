@@ -1,12 +1,16 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { insertUserSchema, insertProjectSchema, insertMcpServerSchema, insertChatMessageSchema } from "@shared/schema";
 import authRoutes from "./routes/auth";
 import oauthRoutes from "./routes/oauth";
 import marketplaceRoutes from "./routes/marketplace";
 import llmRoutes from "./routes/llms";
+import dashboardRoutes from "./routes/dashboard";
+import adminRoutes from "./routes/admin";
 import { corsMiddleware } from "./middleware/auth";
+import { setupDashboardWebSocket, setWebSocketServer } from "./websocket/dashboard";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply CORS middleware to all API routes
@@ -28,6 +32,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register LLM routes
   app.use("/api/llms", llmRoutes);
+
+  // Register Dashboard routes
+  app.use("/api/dashboard", dashboardRoutes);
+
+  // Register Admin routes
+  app.use("/api/admin", adminRoutes);
 
   // User routes
   app.get("/api/users/:id", async (req, res) => {
@@ -256,5 +266,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Setup WebSocket server for real-time dashboard updates
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    path: '/ws/dashboard'
+  });
+  
+  // Setup dashboard WebSocket handlers
+  setupDashboardWebSocket(wss);
+  setWebSocketServer(wss);
+  
+  console.log('WebSocket server initialized on /ws/dashboard');
+  
   return httpServer;
 }

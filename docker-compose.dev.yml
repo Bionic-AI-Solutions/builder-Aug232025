@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     ports:
-      - "8081:5000"
+      - "8080:5000"
     env_file:
       - .env
     environment:
@@ -44,7 +44,7 @@ services:
       # Development Configuration
       - LOG_LEVEL=debug
       - ENABLE_SWAGGER=true
-      - CORS_ORIGIN=http://localhost:8081
+      - CORS_ORIGIN=http://localhost:8080
     volumes:
       - .:/app
       - /app/node_modules

@@ -510,7 +510,7 @@ export const useDashboardWebSocket = (userId?: string) => {
   const [lastMessage, setLastMessage] = useState(null);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8081/ws/dashboard');
+    const ws = new WebSocket('ws://localhost:8080/ws/dashboard');
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -581,7 +581,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Dashboard Integration Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Login as different user types
-    await page.goto('http://localhost:8081');
+    await page.goto('http://localhost:8080');
     await page.fill('[data-testid="email-input"]', 'admin@builderai.com');
     await page.fill('[data-testid="password-input"]', 'demo123');
     await page.click('[data-testid="login-button"]');
@@ -590,7 +590,7 @@ test.describe('Dashboard Integration Tests', () => {
 
   test('Super Admin Dashboard shows real data', async ({ page }) => {
     // Navigate to Super Admin dashboard
-    await page.goto('http://localhost:8081/dashboard');
+    await page.goto('http://localhost:8080/dashboard');
     
     // Verify platform metrics are real
     await expect(page.locator('[data-testid="total-users"]')).toContainText(/\d+/);
@@ -605,7 +605,7 @@ test.describe('Dashboard Integration Tests', () => {
 
   test('Builder Dashboard shows real project data', async ({ page }) => {
     // Login as builder
-    await page.goto('http://localhost:8081');
+    await page.goto('http://localhost:8080');
     await page.fill('[data-testid="email-input"]', 'builder@builderai.com');
     await page.fill('[data-testid="password-input"]', 'demo123');
     await page.click('[data-testid="login-button"]');
@@ -618,7 +618,7 @@ test.describe('Dashboard Integration Tests', () => {
 
   test('End User Dashboard shows real widget data', async ({ page }) => {
     // Login as end user
-    await page.goto('http://localhost:8081');
+    await page.goto('http://localhost:8080');
     await page.fill('[data-testid="email-input"]', 'demo@builderai.com');
     await page.fill('[data-testid="password-input"]', 'demo123');
     await page.click('[data-testid="login-button"]');
@@ -631,7 +631,7 @@ test.describe('Dashboard Integration Tests', () => {
 
   test('Admin Panel shows real user management data', async ({ page }) => {
     // Navigate to admin panel
-    await page.goto('http://localhost:8081/admin');
+    await page.goto('http://localhost:8080/admin');
     
     // Verify user management shows real data
     await expect(page.locator('[data-testid="user-list"]')).toBeVisible();
@@ -645,7 +645,7 @@ test.describe('Dashboard Integration Tests', () => {
 
   test('Real-time updates work correctly', async ({ page }) => {
     // Navigate to dashboard
-    await page.goto('http://localhost:8081/dashboard');
+    await page.goto('http://localhost:8080/dashboard');
     
     // Wait for initial data load
     await page.waitForSelector('[data-testid="total-users"]');
@@ -675,7 +675,7 @@ test.describe('Dashboard Performance Tests', () => {
   test('Dashboard loads within 2 seconds', async ({ page }) => {
     const startTime = Date.now();
     
-    await page.goto('http://localhost:8081/dashboard');
+    await page.goto('http://localhost:8080/dashboard');
     await page.waitForSelector('[data-testid="dashboard-loaded"]');
     
     const loadTime = Date.now() - startTime;
@@ -684,7 +684,7 @@ test.describe('Dashboard Performance Tests', () => {
 
   test('API responses are under 1 second', async ({ page }) => {
     // Test API response times
-    const response = await page.request.get('http://localhost:8081/api/dashboard/analytics');
+    const response = await page.request.get('http://localhost:8080/api/dashboard/analytics');
     expect(response.status()).toBe(200);
     
     // Note: Response time would be measured in actual implementation
@@ -693,7 +693,7 @@ test.describe('Dashboard Performance Tests', () => {
 
   test('Real-time updates have low latency', async ({ page }) => {
     // Test WebSocket latency
-    await page.goto('http://localhost:8081/dashboard');
+    await page.goto('http://localhost:8080/dashboard');
     
     // Measure WebSocket connection time
     const wsStartTime = Date.now();

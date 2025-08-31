@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://builderai:builderai@postgres:5432/builderai_dev
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=test-jwt-secret
+      - AUTH_SECRET=test-auth-secret
+      - REFRESH_TOKEN_SECRET=test-refresh-secret
+      - CORS_ORIGIN=http://localhost:8080
+    depends_on:
+      - postgres
+      - redis
+      - builderai-dev
+    volumes:
+      - ./tests:/app/tests
+      - ./client:/app/client
+      - ./server:/app/server
+    networks:
+      - builderai-network
+    command: >
+      sh -c "
+        echo 'Waiting for application to be ready...' &&
+        while ! curl -f http://builderai-dev:5000/api/health; do
+          sleep 2;
+        done &&
+        echo 'Application is ready, running tests...' &&
+        npx playwright test tests/integratione2e/dashboard.test.ts --reporter=list
+      "
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: builderai_dev
+      POSTGRES_USER: builderai
+      POSTGRES_PASSWORD: builderai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/migrate-real-dashboard-final.sql:/docker-entrypoint-initdb.d/migrate-real-dashboard-final.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - builderai-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - builderai-network
+
+  builderai-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://builderai:builderai@postgres:5432/builderai_dev
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=test-jwt-secret
+      - AUTH_SECRET=test-auth-secret
+      - REFRESH_TOKEN_SECRET=test-refresh-secret
+      - CORS_ORIGIN=http://localhost:8080
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8080:5000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - builderai-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+networks:
+  builderai-network:
+    driver: bridge

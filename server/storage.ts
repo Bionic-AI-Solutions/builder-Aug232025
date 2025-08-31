@@ -11,6 +11,7 @@ import {
   type NewLLMModel,
 } from "../shared/schema";
 import { db } from "./db";
+import { client } from "./db";
 
 // Storage User interface that extends AuthUser with additional fields
 interface StorageUser extends AuthUser {
@@ -890,15 +891,74 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<StorageUser | undefined> {
-    const user = Array.from(this.users.values()).find(user => user.email === email);
-    if (user) {
-      // Convert string isActive to boolean for auth compatibility
-      return {
-        ...user,
-        isActive: user.isActive === true || user.isActive === "true"
-      };
+    try {
+      // First try to get from database using raw SQL
+      const result = await client`
+        SELECT 
+          id,
+          email,
+          password_hash,
+          persona,
+          roles,
+          permissions,
+          metadata,
+          is_active,
+          approval_status,
+          name,
+          username,
+          avatar_url,
+          last_login_at,
+          plan_type,
+          created_at,
+          updated_at
+        FROM users 
+        WHERE email = ${email}
+      `;
+
+      if (result.length > 0) {
+        const dbUser = result[0];
+        return {
+          id: dbUser.id,
+          email: dbUser.email,
+          password_hash: dbUser.password_hash,
+          persona: dbUser.persona as Persona,
+          roles: dbUser.roles || [],
+          permissions: dbUser.permissions || [],
+          metadata: dbUser.metadata || {},
+          isActive: dbUser.is_active,
+          approvalStatus: dbUser.approval_status,
+          name: dbUser.name,
+          username: dbUser.username,
+          avatarUrl: dbUser.avatar_url,
+          lastLoginAt: dbUser.last_login_at,
+          planType: dbUser.plan_type,
+          createdAt: dbUser.created_at,
+          updatedAt: dbUser.updated_at
+        };
+      }
+
+      // Fallback to in-memory storage
+      const user = Array.from(this.users.values()).find(user => user.email === email);
+      if (user) {
+        // Convert string isActive to boolean for auth compatibility
+        return {
+          ...user,
+          isActive: user.isActive === true || user.isActive === "true"
+        };
+      }
+      return user;
+    } catch (error) {
+      console.error('Error getting user by email from database:', error);
+      // Fallback to in-memory storage
+      const user = Array.from(this.users.values()).find(user => user.email === email);
+      if (user) {
+        return {
+          ...user,
+          isActive: user.isActive === true || user.isActive === "true"
+        };
+      }
+      return user;
     }
-    return user;
   }
 
   async getUserById(id: string): Promise<StorageUser | undefined> {
@@ -949,11 +1009,22 @@ export class MemStorage implements IStorage {
   }
 
   async updateUserLastLogin(id: string): Promise<void> {
-    const user = this.users.get(id);
-    if (!user) return;
+    try {
+      // Update in database
+      await client`
+        UPDATE users 
+        SET last_login_at = NOW(), updated_at = NOW() 
+        WHERE id = ${id}
+      `;
+    } catch (error) {
+      console.error('Error updating user last login in database:', error);
+      // Fallback to in-memory storage
+      const user = this.users.get(id);
+      if (!user) return;
 
-    const updatedUser = { ...user, lastLoginAt: new Date() };
-    this.users.set(id, updatedUser);
+      const updatedUser = { ...user, lastLoginAt: new Date() };
+      this.users.set(id, updatedUser);
+    }
   }
 
   async getPendingUsers(): Promise<StorageUser[]> {

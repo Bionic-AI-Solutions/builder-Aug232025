@@ -6,6 +6,12 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { type Project } from "@shared/schema";
 import {
+  useDashboardAnalytics,
+  useBuilderDashboard,
+  useEndUserDashboard
+} from "@/hooks/useDashboard";
+import { useDashboardWebSocket } from "@/hooks/useWebSocket";
+import {
   Smartphone,
   Users,
   Network,
@@ -17,114 +23,26 @@ import {
   Crown,
   Trophy,
   BarChart3,
-  Activity
+  Activity,
+  Loader2
 } from "lucide-react";
 
-// Mock data for Super Admin dashboard
-const mockSuperAdminData = {
-  platformMetrics: {
-    totalApps: 156,
-    totalBuilders: 89,
-    totalUsers: 1247,
-    totalRevenue: 45600, // in cents
-    monthlyGrowth: 23.5,
-  },
-  leaderboards: {
-    topBuilders: [
-      {
-        id: '1',
-        name: 'John Builder',
-        email: 'john@example.com',
-        appsCount: 12,
-        revenue: 8900,
-        users: 45,
-      },
-      {
-        id: '2',
-        name: 'Sarah Developer',
-        email: 'sarah@example.com',
-        appsCount: 8,
-        revenue: 6700,
-        users: 32,
-      },
-      {
-        id: '3',
-        name: 'Mike Creator',
-        email: 'mike@example.com',
-        appsCount: 6,
-        revenue: 5400,
-        users: 28,
-      },
-    ],
-    topApps: [
-      {
-        id: '1',
-        name: 'Restaurant POS System',
-        builder: 'John Builder',
-        revenue: 3200,
-        users: 23,
-        rating: 4.8,
-      },
-      {
-        id: '2',
-        name: 'E-commerce Analytics',
-        builder: 'Sarah Developer',
-        revenue: 2800,
-        users: 18,
-        rating: 4.6,
-      },
-      {
-        id: '3',
-        name: 'Inventory Management',
-        builder: 'Mike Creator',
-        revenue: 2400,
-        users: 15,
-        rating: 4.7,
-      },
-    ],
-    topMcpServers: [
-      {
-        name: 'Database Connector',
-        usage: 89,
-        builders: 45,
-        status: 'active',
-      },
-      {
-        name: 'API Gateway',
-        usage: 67,
-        builders: 32,
-        status: 'active',
-      },
-      {
-        name: 'Payment Processor',
-        usage: 54,
-        builders: 28,
-        status: 'active',
-      },
-    ],
-  },
-  recentActivity: [
-    {
-      id: '1',
-      type: 'new_app',
-      message: 'New app "Restaurant POS" published by John Builder',
-      timestamp: '2024-12-18T14:20:00Z',
-      revenue: 400,
-    },
-    {
-      id: '2',
-      type: 'new_user',
-      message: 'New end user "Pizza Palace" registered',
-      timestamp: '2024-12-18T13:15:00Z',
-    },
-    {
-      id: '3',
-      type: 'revenue',
-      message: 'Revenue milestone: $45,000 total platform revenue',
-      timestamp: '2024-12-18T12:30:00Z',
-      revenue: 45000,
-    },
-  ],
+// Helper functions
+const formatCurrency = (amount: string | number) => {
+  const numAmount = typeof amount === 'string' ? parseInt(amount) : amount;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(numAmount / 100);
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
 export default function Dashboard() {
@@ -132,26 +50,55 @@ export default function Dashboard() {
   const persona = user?.persona;
   const [, setLocation] = useLocation();
 
-  // If not Super Admin, show regular dashboard
+  // Use WebSocket for real-time updates
+  useDashboardWebSocket(user?.id);
+
+  // If not Super Admin, show persona-specific dashboard
   if (persona !== 'super_admin') {
+    if (persona === 'builder') {
+      return <BuilderDashboard userId={user?.id} />;
+    } else if (persona === 'end_user') {
+      return <EndUserDashboard userId={user?.id} />;
+    }
     return <RegularDashboard />;
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount / 100);
-  };
+  return <SuperAdminDashboard />;
+}
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+function SuperAdminDashboard() {
+  const [, setLocation] = useLocation();
+  const { data: analytics, isLoading, error } = useDashboardAnalytics();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading dashboard data...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600">Error loading dashboard data</p>
+          <Button onClick={() => window.location.reload()} className="mt-2">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p>No data available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -173,13 +120,13 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Apps</CardTitle>
-            <Smartphone className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockSuperAdminData.platformMetrics.totalApps}</div>
+            <div className="text-2xl font-bold">{analytics.platformMetrics.total_users}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+{mockSuperAdminData.platformMetrics.monthlyGrowth}%</span> this month
+              Across all personas
             </p>
           </CardContent>
         </Card>
@@ -190,7 +137,7 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockSuperAdminData.platformMetrics.totalBuilders}</div>
+            <div className="text-2xl font-bold">{analytics.platformMetrics.builder_count}</div>
             <p className="text-xs text-muted-foreground">
               Active app creators
             </p>
@@ -199,13 +146,13 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+            <Smartphone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockSuperAdminData.platformMetrics.totalUsers}</div>
+            <div className="text-2xl font-bold">{analytics.platformMetrics.total_projects}</div>
             <p className="text-xs text-muted-foreground">
-              End users implementing apps
+              Marketplace projects
             </p>
           </CardContent>
         </Card>
@@ -216,111 +163,10 @@ export default function Dashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(mockSuperAdminData.platformMetrics.totalRevenue)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(analytics.platformMetrics.total_revenue)}</div>
             <p className="text-xs text-muted-foreground">
-              Platform-wide earnings
+              Platform revenue
             </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Leaderboards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top Builders */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-yellow-500" />
-              Top Builders
-            </CardTitle>
-            <CardDescription>Builders with most apps and revenue</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockSuperAdminData.leaderboards.topBuilders.map((builder, index) => (
-                <div key={builder.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{builder.name}</p>
-                      <p className="text-sm text-muted-foreground">{builder.email}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{builder.appsCount} apps</p>
-                    <p className="text-sm text-green-600">{formatCurrency(builder.revenue)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Apps */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-blue-500" />
-              Top Apps
-            </CardTitle>
-            <CardDescription>Most successful applications</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockSuperAdminData.leaderboards.topApps.map((app, index) => (
-                <div key={app.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{app.name}</p>
-                      <p className="text-sm text-muted-foreground">by {app.builder}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{formatCurrency(app.revenue)}</p>
-                    <p className="text-sm text-muted-foreground">{app.users} users</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top MCP Servers */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="w-5 h-5 text-green-500" />
-              Top MCP Servers
-            </CardTitle>
-            <CardDescription>Most used MCP servers</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockSuperAdminData.leaderboards.topMcpServers.map((server, index) => (
-                <div key={server.name} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{server.name}</p>
-                      <p className="text-sm text-muted-foreground">{server.builders} builders</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{server.usage} uses</p>
-                    <Badge variant="outline" className="text-xs">
-                      {server.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -336,29 +182,418 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockSuperAdminData.recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-center justify-between p-4 border rounded-lg">
+            {analytics.recentActivity.slice(0, 10).map((activity, index) => (
+              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    {activity.type === 'new_app' && <Smartphone className="w-5 h-5 text-purple-600" />}
-                    {activity.type === 'new_user' && <Users className="w-5 h-5 text-purple-600" />}
-                    {activity.type === 'revenue' && <DollarSign className="w-5 h-5 text-purple-600" />}
+                    {activity.type === 'project_created' && <Smartphone className="w-5 h-5 text-purple-600" />}
+                    {activity.type === 'user_registration' && <Users className="w-5 h-5 text-purple-600" />}
+                    {activity.type === 'marketplace_purchase' && <DollarSign className="w-5 h-5 text-purple-600" />}
                   </div>
                   <div>
-                    <p className="font-medium">{activity.message}</p>
+                    <p className="font-medium">{activity.title}</p>
                     <p className="text-sm text-muted-foreground">{formatDate(activity.timestamp)}</p>
                   </div>
                 </div>
-                {activity.revenue && (
-                  <div className="text-right">
-                    <p className="font-medium text-green-600">{formatCurrency(activity.revenue)}</p>
-                  </div>
-                )}
+                <Badge variant="outline" className="text-xs">
+                  {activity.category}
+                </Badge>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function BuilderDashboard({ userId }: { userId?: string }) {
+  const { data: dashboard, isLoading, error } = useBuilderDashboard(userId || '');
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading builder dashboard...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600">Error loading builder dashboard</p>
+          <Button onClick={() => window.location.reload()} className="mt-2">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboard) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p>No data available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Builder Dashboard</h1>
+          <p className="text-muted-foreground">
+            Your projects, revenue, and performance metrics
+          </p>
+        </div>
+      </div>
+
+      {/* Performance Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(dashboard.performance.total_revenue)}</div>
+            <p className="text-xs text-muted-foreground">
+              Lifetime earnings
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Projects Created</CardTitle>
+            <Smartphone className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboard.performance.projects_created}</div>
+            <p className="text-xs text-muted-foreground">
+              Total projects
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Downloads</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboard.performance.total_downloads}</div>
+            <p className="text-xs text-muted-foreground">
+              Marketplace downloads
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+            <Trophy className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{parseFloat(dashboard.performance.avg_rating).toFixed(1)}</div>
+            <p className="text-xs text-muted-foreground">
+              Out of 5 stars
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Projects */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="w-5 h-5 text-blue-500" />
+            Your Projects
+          </CardTitle>
+          <CardDescription>Projects you've created and published</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {dashboard.projects.map((project) => (
+              <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Smartphone className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{project.name}</p>
+                    <p className="text-sm text-muted-foreground">{project.description}</p>
+                    <p className="text-xs text-muted-foreground">Created: {formatDate(project.created_at)}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Badge variant={project.status === 'completed' ? 'default' : 'secondary'}>
+                    {project.status}
+                  </Badge>
+                  {project.marketplace_title && (
+                    <div className="mt-2">
+                      <p className="text-sm font-medium">{formatCurrency(project.marketplace_price || 0)}</p>
+                      <p className="text-xs text-muted-foreground">{project.download_count} downloads</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Reviews */}
+      {dashboard.reviews.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-green-500" />
+              Recent Reviews
+            </CardTitle>
+            <CardDescription>Feedback from your customers</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {dashboard.reviews.map((review) => (
+                <div key={review.id} className="flex items-start gap-3 p-4 border rounded-lg">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <MessageCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="font-medium">{review.project_title}</p>
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <span key={i} className={`text-sm ${i < review.rating ? 'text-yellow-500' : 'text-gray-300'}`}>
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">{review.review_text}</p>
+                    <p className="text-xs text-muted-foreground">
+                      by {review.reviewer_name} • {formatDate(review.created_at)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function EndUserDashboard({ userId }: { userId?: string }) {
+  const { data: dashboard, isLoading, error } = useEndUserDashboard(userId || '');
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading end user dashboard...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600">Error loading end user dashboard</p>
+          <Button onClick={() => window.location.reload()} className="mt-2">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboard) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p>No data available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">End User Dashboard</h1>
+          <p className="text-muted-foreground">
+            Your projects, purchases, and widget usage
+          </p>
+        </div>
+      </div>
+
+      {/* Activity Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(dashboard.activity.total_spent)}</div>
+            <p className="text-xs text-muted-foreground">
+              Marketplace purchases
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Projects Created</CardTitle>
+            <Smartphone className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboard.activity.projects_created}</div>
+            <p className="text-xs text-muted-foreground">
+              Your projects
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Widget Implementations</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboard.activity.widget_implementations}</div>
+            <p className="text-xs text-muted-foreground">
+              Active widgets
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Usage Events</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboard.activity.usage_events}</div>
+            <p className="text-xs text-muted-foreground">
+              Widget interactions
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Projects */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="w-5 h-5 text-blue-500" />
+            Your Projects
+          </CardTitle>
+          <CardDescription>Projects you've created</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {dashboard.projects.map((project) => (
+              <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Smartphone className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{project.name}</p>
+                    <p className="text-sm text-muted-foreground">{project.description}</p>
+                    <p className="text-xs text-muted-foreground">Created: {formatDate(project.created_at)}</p>
+                  </div>
+                </div>
+                <Badge variant={project.status === 'completed' ? 'default' : 'secondary'}>
+                  {project.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Purchases */}
+      {dashboard.purchases.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Store className="w-5 h-5 text-green-500" />
+              Marketplace Purchases
+            </CardTitle>
+            <CardDescription>Projects you've purchased from the marketplace</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {dashboard.purchases.map((purchase) => (
+                <div key={purchase.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Store className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{purchase.project_title}</p>
+                      <p className="text-sm text-muted-foreground">{purchase.project_description}</p>
+                      <p className="text-xs text-muted-foreground">by {purchase.seller_name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{formatCurrency(purchase.amount)}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(purchase.purchased_at)}</p>
+                    <Badge variant={purchase.status === 'completed' ? 'default' : 'secondary'}>
+                      {purchase.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Widget Implementations */}
+      {dashboard.widgetImplementations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-purple-500" />
+              Widget Implementations
+            </CardTitle>
+            <CardDescription>Widgets you've implemented in your projects</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {dashboard.widgetImplementations.map((widget) => (
+                <div key={widget.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Eye className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{widget.project_name}</p>
+                      <p className="text-sm text-muted-foreground">Customer ID: {widget.customer_id}</p>
+                      <p className="text-xs text-muted-foreground">Last used: {formatDate(widget.last_used)}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{widget.usage_count} uses</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(widget.created_at)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
