@@ -19,6 +19,7 @@ import Analytics from "@/pages/analytics";
 import Billing from "@/pages/billing";
 import Admin from "@/pages/admin";
 import LLMs from "@/pages/llms";
+import Profile from "@/pages/profile";
 import MainLayout from "@/components/layout/main-layout";
 import NotFound from "@/pages/not-found";
 
@@ -114,6 +115,7 @@ function Router() {
       <Route path="/admin" component={() => <PersonaRoute component={Admin} allowedPersonas={['super_admin']} />} />
       <Route path="/mcp-servers" component={() => <PersonaRoute component={MCPServers} allowedPersonas={['super_admin']} />} />
       <Route path="/llms" component={() => <PersonaRoute component={LLMs} allowedPersonas={['super_admin']} />} />
+      <Route path="/profile" component={() => <ProtectedRoute component={Profile} />} />
 
       <Route component={NotFound} />
     </Switch>

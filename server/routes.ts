@@ -6,8 +6,12 @@ import authRoutes from "./routes/auth";
 import oauthRoutes from "./routes/oauth";
 import marketplaceRoutes from "./routes/marketplace";
 import llmRoutes from "./routes/llms";
+import { corsMiddleware } from "./middleware/auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply CORS middleware to all API routes
+  app.use("/api", corsMiddleware);
+
   // Health check endpoint
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });

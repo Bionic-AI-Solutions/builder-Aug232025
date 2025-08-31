@@ -1,24 +1,24 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { 
-  LoginSchema, 
-  RegisterSchema, 
+import {
+  LoginSchema,
+  RegisterSchema,
   RefreshTokenSchema,
-  hashPassword, 
-  comparePassword, 
-  generateTokenPair, 
+  hashPassword,
+  comparePassword,
+  generateTokenPair,
   verifyRefreshToken,
   validatePasswordStrength,
   createUserWithRoles,
   type User,
   type Persona
 } from '../lib/auth';
-import { 
-  authenticateToken, 
-  createRateLimitMiddleware, 
-  corsMiddleware, 
+import {
+  authenticateToken,
+  createRateLimitMiddleware,
+  corsMiddleware,
   authLoggingMiddleware,
-  requireSuperAdmin 
+  requireSuperAdmin
 } from '../middleware/auth';
 import { storage } from '../storage';
 
@@ -492,7 +492,7 @@ router.post('/register-admin', authenticateToken, requireSuperAdmin, async (req:
 router.get('/pending-users', authenticateToken, requireSuperAdmin, async (req: Request, res: Response) => {
   try {
     const pendingUsers = await storage.getPendingUsers();
-    
+
     res.json({
       success: true,
       data: {
@@ -596,6 +596,116 @@ router.post('/reject-user/:userId', authenticateToken, requireSuperAdmin, async 
     }
 
     console.error('[REJECT USER ERROR]', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
+/**
+ * PUT /api/auth/profile
+ * Update user profile (authenticated users only)
+ */
+router.put('/profile', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { name, email, currentPassword, newPassword } = z.object({
+      name: z.string().optional(),
+      email: z.string().email('Invalid email address').optional(),
+      currentPassword: z.string().optional(),
+      newPassword: z.string().min(8, 'Password must be at least 8 characters').optional(),
+    }).parse(req.body);
+
+    // Get current user
+    const user = await storage.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+
+    if (email !== undefined && email !== user.email) {
+      // Check if email is already taken
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(409).json({
+          error: 'Email already in use',
+          code: 'EMAIL_ALREADY_EXISTS'
+        });
+      }
+      updateData.email = email;
+    }
+
+    // Handle password change
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({
+          error: 'Current password is required to change password',
+          code: 'CURRENT_PASSWORD_REQUIRED'
+        });
+      }
+
+      // Verify current password
+      const isValidPassword = await comparePassword(currentPassword, user.password_hash);
+      if (!isValidPassword) {
+        return res.status(401).json({
+          error: 'Current password is incorrect',
+          code: 'INVALID_CURRENT_PASSWORD'
+        });
+      }
+
+      // Hash new password
+      const newPasswordHash = await hashPassword(newPassword);
+      updateData.password_hash = newPasswordHash;
+    }
+
+    // Update user
+    const updatedUser = await storage.updateUser(userId, updateData);
+    if (!updatedUser) {
+      return res.status(500).json({
+        error: 'Failed to update user',
+        code: 'UPDATE_FAILED'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          name: updatedUser.name,
+          persona: updatedUser.persona,
+          roles: updatedUser.roles,
+          permissions: updatedUser.permissions,
+          metadata: updatedUser.metadata,
+          isActive: updatedUser.isActive,
+          approvalStatus: updatedUser.approvalStatus,
+          createdAt: updatedUser.createdAt,
+          updatedAt: updatedUser.updatedAt,
+        }
+      }
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Validation error',
+        code: 'VALIDATION_ERROR',
+        details: error.errors
+      });
+    }
+
+    console.error('[PROFILE UPDATE ERROR]', error);
     res.status(500).json({
       error: 'Internal server error',
       code: 'INTERNAL_ERROR'

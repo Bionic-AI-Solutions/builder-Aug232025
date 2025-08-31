@@ -51,7 +51,7 @@ interface AuthState {
 }
 
 // API base URL
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = 'http://localhost:8081/api';
 
 // Helper function to make authenticated API calls
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
@@ -162,6 +162,13 @@ export const useAuth = create<AuthState>()(
           isAuthenticated: true,
           error: null,
         });
+      },
+
+      updateUser: (user: User) => {
+        set((state) => ({
+          ...state,
+          user,
+        }));
       },
 
       // Initialize auth state from localStorage on app start
