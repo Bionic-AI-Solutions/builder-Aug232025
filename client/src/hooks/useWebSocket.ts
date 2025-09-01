@@ -16,7 +16,12 @@ export const useDashboardWebSocket = (userId?: string) => {
             return;
         }
 
-        const wsUrl = `ws://localhost:8080/ws/dashboard${userId ? `?userId=${userId}` : ''}`;
+        // Use dynamic WebSocket URL based on current window location
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        const wsUrl = `${protocol}//${host}/ws/dashboard${userId ? `?userId=${userId}` : ''}`;
+
+        console.log('Connecting to WebSocket:', wsUrl);
         wsRef.current = new WebSocket(wsUrl);
 
         wsRef.current.onopen = () => {
