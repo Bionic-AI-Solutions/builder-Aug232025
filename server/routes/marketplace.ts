@@ -14,7 +14,7 @@ import {
   validateQuery,
   logMarketplaceOperation
 } from '../middleware/phase2-auth';
-import { storage, getProject, updateProject } from '../storage';
+import { storage, getProject, updateProject, getProjects, getMarketplaceProjectByProjectId } from '../storage';
 
 const router = Router();
 
@@ -1088,7 +1088,7 @@ router.get('/builder/projects',
       }
 
       // Get builder's own projects
-      const ownProjects = await storage.getProjects(req.user.id);
+      const ownProjects = await getProjects(req.user.id);
 
       // Get marketplace projects (active and approved)
       const filters: any = {
@@ -1299,8 +1299,8 @@ router.delete('/builder/projects/:id/publish',
         });
       }
 
-      // Find the marketplace project by its ID
-      const marketplaceProject = await storage.getMarketplaceProject(id);
+      // Find the marketplace project by project ID
+      const marketplaceProject = await getMarketplaceProjectByProjectId(id);
       if (!marketplaceProject) {
         return res.status(404).json({
           error: 'Project not found in marketplace',

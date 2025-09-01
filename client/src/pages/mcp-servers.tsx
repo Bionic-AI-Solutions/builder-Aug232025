@@ -58,15 +58,39 @@ export default function McpServers() {
 
   const mcpServers: McpServer[] = mcpData?.data?.servers || [];
 
-  // Update MCP server mutation
+  // Create/Update MCP server mutation
   const updateMcpServerMutation = useMutation({
     mutationFn: async (server: McpServer) => {
-      // In real app, this would be an API call
-      console.log("Updating MCP server:", server);
-      return server;
+      if (selectedServer) {
+        // Update existing server
+        return apiCall(`/admin/mcp-servers/${server.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: server.name,
+            type: server.type,
+            url: server.url,
+            description: server.description,
+            status: server.status
+          })
+        });
+      } else {
+        // Create new server
+        return apiCall('/admin/mcp-servers', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: server.name,
+            type: server.type,
+            url: server.url,
+            description: server.description,
+            status: 'active',
+            approved: false
+          })
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mcp-servers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/mcp-servers"] });
       toast({
         title: "MCP Server Updated",
         description: "The MCP server has been successfully updated.",
@@ -90,10 +114,22 @@ export default function McpServers() {
   };
 
   const handleSaveServer = () => {
-    if (!selectedServer || !editingServer.name || !editingServer.url) {
+    // Check required fields
+    if (!editingServer.name || !editingServer.type) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields (Name and Type).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if URL is required for the selected type
+    const requiresUrl = editingServer.type !== 'stdio';
+    if (requiresUrl && !editingServer.url) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide a connection URL for this server type.",
         variant: "destructive",
       });
       return;
@@ -396,12 +432,10 @@ export default function McpServers() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select type</option>
-                <option value="http">HTTP</option>
-                <option value="tcp">TCP</option>
+                <option value="sse">SSE (Server-Sent Events)</option>
+                <option value="stdio">STDIO</option>
                 <option value="websocket">WebSocket</option>
                 <option value="grpc">gRPC</option>
-                <option value="sse">SSE</option>
-                <option value="stdio">STDIO</option>
               </select>
             </div>
 

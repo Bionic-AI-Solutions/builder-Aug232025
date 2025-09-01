@@ -1882,6 +1882,122 @@ export async function getProject(id: string): Promise<Project | null> {
 }
 
 /**
+ * Get marketplace project by project ID from database
+ */
+export async function getMarketplaceProjectByProjectId(projectId: string): Promise<MarketplaceProject | null> {
+  try {
+    const result = await client`
+      SELECT 
+        p.id,
+        p.user_id,
+        p.name,
+        p.description,
+        p.category,
+        p.tags,
+        p.marketplace_price,
+        p.marketplace_description,
+        p.marketplace_status,
+        p.marketplace_approval_status,
+        p.marketplace_featured,
+        p.marketplace_rating,
+        p.marketplace_review_count,
+        p.marketplace_download_count,
+        p.marketplace_mcp_servers,
+        p.marketplace_popularity_score,
+        p.marketplace_published_at,
+        p.created_at
+      FROM projects p
+      WHERE p.id = ${projectId}
+    `;
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    const r = result[0];
+    return {
+      id: r.id,
+      projectId: r.id,
+      builderId: r.user_id,
+      title: r.name,
+      description: r.marketplace_description ?? r.description ?? '',
+      price: r.marketplace_price ?? 0,
+      category: r.category ?? 'general',
+      tags: Array.isArray(r.tags) ? r.tags : [],
+      status: r.marketplace_status ?? 'inactive',
+      featured: !!r.marketplace_featured,
+      rating: r.marketplace_rating ?? 0,
+      reviewCount: r.marketplace_review_count ?? 0,
+      downloadCount: r.marketplace_download_count ?? 0,
+      revenue: 0,
+      publishedAt: r.marketplace_published_at ?? r.created_at ?? new Date(),
+      updatedAt: r.created_at ?? new Date(),
+      metadata: {},
+      builderName: undefined,
+      // Non-standard fields used by routes mapping
+      approval_status: r.marketplace_approval_status ?? 'pending',
+      mcpServers: r.marketplace_mcp_servers ?? [],
+      popularity_score: r.marketplace_popularity_score ?? 0,
+    } as any;
+  } catch (error) {
+    console.error('[STORAGE] Error fetching marketplace project by project ID:', error);
+    throw new Error('Failed to fetch marketplace project');
+  }
+}
+
+/**
+ * Get projects for a specific user from database
+ */
+export async function getProjects(userId: string): Promise<Project[]> {
+  try {
+    const { projects } = await import('../shared/schema');
+
+    const result = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.userId, userId))
+      .orderBy(desc(projects.createdAt));
+
+    return result.map(project => ({
+      id: project.id,
+      userId: project.userId,
+      name: project.name,
+      description: project.description,
+      status: project.status,
+      category: project.category,
+      tags: project.tags || [],
+      llmModelId: project.llmModelId,
+      promptId: project.promptId,
+      knowledgeBaseId: project.knowledgeBaseId,
+      llm: project.llm,
+      files: project.files || [],
+      published: project.published,
+      marketplacePrice: project.marketplacePrice,
+      marketplaceDescription: project.marketplaceDescription,
+      marketplaceStatus: project.marketplaceStatus,
+      marketplaceApprovalStatus: project.marketplaceApprovalStatus,
+      marketplacePublishedAt: project.marketplacePublishedAt,
+      marketplaceFeatured: project.marketplaceFeatured,
+      marketplaceRating: project.marketplaceRating,
+      marketplaceReviewCount: project.marketplaceReviewCount,
+      marketplaceDownloadCount: project.marketplaceDownloadCount,
+      marketplaceLikeCount: project.marketplaceLikeCount,
+      marketplaceRevenue: project.marketplaceRevenue,
+      marketplaceApprovedBy: project.marketplaceApprovedBy,
+      marketplaceApprovedAt: project.marketplaceApprovedAt,
+      marketplaceRejectionReason: project.marketplaceRejectionReason,
+      revenue: project.revenue,
+      revenueGrowth: project.revenueGrowth,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt
+    }));
+  } catch (error) {
+    console.error('[STORAGE] Error fetching user projects:', error);
+    throw new Error('Failed to fetch user projects');
+  }
+}
+
+/**
  * Update a project in database
  */
 export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {

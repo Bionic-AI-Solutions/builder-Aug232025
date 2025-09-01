@@ -57,10 +57,10 @@ const serverTypes = [
   { value: "grpc", label: "gRPC", description: "High-performance RPC" },
 ];
 
-export default function ServerConfigModal({ 
-  server, 
-  open, 
-  onOpenChange 
+export default function ServerConfigModal({
+  server,
+  open,
+  onOpenChange
 }: ServerConfigModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -102,15 +102,14 @@ export default function ServerConfigModal({
 
   const createServerMutation = useMutation({
     mutationFn: async (data: ServerConfigForm) => {
-      return apiRequest("POST", "/api/mcp-servers", {
+      return apiRequest("POST", "/api/admin/mcp-servers", {
         ...data,
-        userId: user?.id,
-        status: "disconnected",
-        latency: 0,
+        status: "active",
+        approved: false,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/mcp-servers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/mcp-servers"] });
       toast({
         title: "Server Added",
         description: "MCP server has been configured successfully.",
@@ -129,10 +128,10 @@ export default function ServerConfigModal({
   const updateServerMutation = useMutation({
     mutationFn: async (data: ServerConfigForm) => {
       if (!server) throw new Error("No server to update");
-      return apiRequest("PUT", `/api/mcp-servers/${server.id}`, data);
+      return apiRequest("PUT", `/api/admin/mcp-servers/${server.id}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/mcp-servers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/mcp-servers"] });
       toast({
         title: "Server Updated",
         description: "MCP server configuration has been updated.",
@@ -150,7 +149,7 @@ export default function ServerConfigModal({
 
   const onSubmit = async (data: ServerConfigForm) => {
     setIsSubmitting(true);
-    
+
     try {
       if (server) {
         await updateServerMutation.mutateAsync(data);
@@ -251,16 +250,16 @@ export default function ServerConfigModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {selectedType === "websocket" ? "WebSocket URL" : 
-                       selectedType === "grpc" ? "gRPC Endpoint" : "URL/Endpoint"}
+                      {selectedType === "websocket" ? "WebSocket URL" :
+                        selectedType === "grpc" ? "gRPC Endpoint" : "URL/Endpoint"}
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder={
                           selectedType === "websocket" ? "wss://api.example.com" :
-                          selectedType === "grpc" ? "grpc://api.example.com:9090" :
-                          selectedType === "sse" ? "wss://sse.example.com" :
-                          "Enter endpoint URL"
+                            selectedType === "grpc" ? "grpc://api.example.com:9090" :
+                              selectedType === "sse" ? "wss://sse.example.com" :
+                                "Enter endpoint URL"
                         }
                         data-testid="input-server-url"
                         {...field}

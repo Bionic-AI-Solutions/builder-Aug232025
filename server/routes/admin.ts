@@ -393,6 +393,56 @@ router.put('/llm-models/:id/approve', authenticateToken, async (req: Request, re
 // MCP SERVERS MANAGEMENT
 // ============================================================================
 
+// POST /api/admin/mcp-servers - Create a new MCP server
+router.post('/mcp-servers', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        // Check if user is super admin
+        if (req.user!.persona !== 'super_admin') {
+            return res.status(403).json({
+                error: 'Super Admin access required',
+                code: 'SUPER_ADMIN_REQUIRED',
+                userPersona: req.user!.persona
+            });
+        }
+
+        const { name, type, url, description, status = 'active', approved = false } = req.body;
+
+        // Validate required fields
+        if (!name || !type) {
+            return res.status(400).json({
+                error: 'Name and type are required',
+                code: 'MISSING_REQUIRED_FIELDS'
+            });
+        }
+
+        // Validate type enum
+        const validTypes = ['sse', 'stdio', 'websocket', 'grpc'];
+        if (!validTypes.includes(type)) {
+            return res.status(400).json({
+                error: `Invalid type. Must be one of: ${validTypes.join(', ')}`,
+                code: 'INVALID_TYPE'
+            });
+        }
+
+        const result = await client`
+            INSERT INTO mcp_servers (name, type, url, description, status, approved, created_by, created_at, updated_at)
+            VALUES (${name}, ${type}, ${url || null}, ${description || null}, ${status}, ${approved}, ${req.user!.id}, NOW(), NOW())
+            RETURNING id, name, type, url, description, status, approved, created_at, updated_at
+        `;
+
+        res.status(201).json({
+            success: true,
+            data: { server: result[0] }
+        });
+    } catch (error) {
+        console.error('Admin MCP server creation error:', error);
+        res.status(500).json({
+            error: 'Failed to create MCP server',
+            code: 'ADMIN_MCP_CREATION_ERROR'
+        });
+    }
+});
+
 // GET /api/admin/mcp-servers - Get all MCP servers with approval status
 router.get('/mcp-servers', authenticateToken, async (req: Request, res: Response) => {
     try {
@@ -430,6 +480,65 @@ router.get('/mcp-servers', authenticateToken, async (req: Request, res: Response
         res.status(500).json({
             error: 'Failed to fetch MCP servers',
             code: 'ADMIN_MCP_SERVERS_ERROR'
+        });
+    }
+});
+
+// PUT /api/admin/mcp-servers/:id - Update MCP server
+router.put('/mcp-servers/:id', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        // Check if user is super admin
+        if (req.user!.persona !== 'super_admin') {
+            return res.status(403).json({
+                error: 'Super Admin access required',
+                code: 'SUPER_ADMIN_REQUIRED',
+                userPersona: req.user!.persona
+            });
+        }
+
+        const { id } = req.params;
+        const { name, type, url, description, status } = req.body;
+
+        // Validate required fields
+        if (!name || !type) {
+            return res.status(400).json({
+                error: 'Name and type are required',
+                code: 'MISSING_REQUIRED_FIELDS'
+            });
+        }
+
+        // Validate type enum
+        const validTypes = ['sse', 'stdio', 'websocket', 'grpc'];
+        if (!validTypes.includes(type)) {
+            return res.status(400).json({
+                error: `Invalid type. Must be one of: ${validTypes.join(', ')}`,
+                code: 'INVALID_TYPE'
+            });
+        }
+
+        const result = await client`
+            UPDATE mcp_servers 
+            SET name = ${name}, type = ${type}, url = ${url || null}, description = ${description || null}, status = ${status || 'active'}, updated_at = NOW()
+            WHERE id = ${id}
+            RETURNING id, name, type, url, description, status, approved, created_at, updated_at
+        `;
+
+        if (result.length === 0) {
+            return res.status(404).json({
+                error: 'MCP server not found',
+                code: 'MCP_SERVER_NOT_FOUND'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: { server: result[0] }
+        });
+    } catch (error) {
+        console.error('Admin MCP server update error:', error);
+        res.status(500).json({
+            error: 'Failed to update MCP server',
+            code: 'ADMIN_MCP_UPDATE_ERROR'
         });
     }
 });
