@@ -20,6 +20,7 @@ import Billing from "@/pages/billing";
 import Admin from "@/pages/admin";
 import LLMs from "@/pages/llms";
 import Profile from "@/pages/profile";
+import Credentials from "@/pages/credentials";
 import MainLayout from "@/components/layout/main-layout";
 import NotFound from "@/pages/not-found";
 
@@ -116,6 +117,9 @@ function Router() {
       <Route path="/mcp-servers" component={() => <PersonaRoute component={MCPServers} allowedPersonas={['super_admin']} />} />
       <Route path="/llms" component={() => <PersonaRoute component={LLMs} allowedPersonas={['super_admin']} />} />
       <Route path="/profile" component={() => <ProtectedRoute component={Profile} />} />
+      
+      {/* Credentials route - available to builders and admins */}
+      <Route path="/credentials" component={() => <PersonaRoute component={Credentials} allowedPersonas={['builder', 'super_admin']} />} />
 
       <Route component={NotFound} />
     </Switch>

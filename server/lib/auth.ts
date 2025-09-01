@@ -15,10 +15,10 @@ export type Persona = 'super_admin' | 'builder' | 'end_user';
 export type UserRole = 'admin' | 'super_admin' | 'builder' | 'end_user';
 
 // Permission types
-export type Permission = 
-  | 'create_project' 
-  | 'edit_project' 
-  | 'delete_project' 
+export type Permission =
+  | 'create_project'
+  | 'edit_project'
+  | 'delete_project'
   | 'publish_project'
   | 'purchase_project'
   | 'use_widget'
@@ -27,6 +27,9 @@ export type Permission =
   | 'view_analytics'
   | 'manage_marketplace'
   | 'manage_billing'
+  | 'view_credentials'
+  | 'manage_credentials'
+  | 'manage_project_credentials'
   | '*'; // Wildcard permission
 
 // User interface
@@ -90,6 +93,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'delete_project',
     'publish_project',
     'view_analytics',
+    'view_credentials',
+    'manage_credentials',
+    'manage_project_credentials',
   ],
   end_user: [
     'purchase_project',
@@ -179,12 +185,12 @@ export function verifyRefreshToken(token: string): { userId: string; email: stri
  */
 export function getPermissionsFromRoles(roles: UserRole[]): Permission[] {
   const permissions = new Set<Permission>();
-  
+
   for (const role of roles) {
     const rolePermissions = ROLE_PERMISSIONS[role] || [];
     rolePermissions.forEach(permission => permissions.add(permission));
   }
-  
+
   return Array.from(permissions);
 }
 
@@ -215,7 +221,7 @@ export function hasAllPermissions(userPermissions: Permission[], requiredPermiss
 export function canAccessPersonaData(userPersona: Persona, targetPersona: Persona): boolean {
   // Super admin can access all data
   if (userPersona === 'super_admin') return true;
-  
+
   // Users can only access their own data
   return userPersona === targetPersona;
 }
@@ -253,7 +259,7 @@ export function createUserWithRoles(
  */
 export function extractUserFromToken(token: string): User {
   const payload = verifyAccessToken(token);
-  
+
   return {
     id: payload.userId,
     email: payload.email,
@@ -282,27 +288,27 @@ export function generateTokenPair(user: User): { accessToken: string; refreshTok
  */
 export function validatePasswordStrength(password: string): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
-  
+
   if (password.length < 8) {
     errors.push('Password must be at least 8 characters long');
   }
-  
+
   if (!/[A-Z]/.test(password)) {
     errors.push('Password must contain at least one uppercase letter');
   }
-  
+
   if (!/[a-z]/.test(password)) {
     errors.push('Password must contain at least one lowercase letter');
   }
-  
+
   if (!/\d/.test(password)) {
     errors.push('Password must contain at least one number');
   }
-  
+
   if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
     errors.push('Password must contain at least one special character');
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors,

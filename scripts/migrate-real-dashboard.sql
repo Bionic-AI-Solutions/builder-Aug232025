@@ -192,3 +192,4 @@ SELECT COUNT(*) as total_projects FROM marketplace_projects;
 SELECT COUNT(*) as total_revenue_events FROM revenue_events;
 
 
+

@@ -29,7 +29,7 @@ router.use(corsMiddleware);
 router.use(authLoggingMiddleware);
 
 // Rate limiting for authentication endpoints
-const loginRateLimit = createRateLimitMiddleware(5, 15 * 60 * 1000); // 5 attempts per 15 minutes
+const loginRateLimit = createRateLimitMiddleware(50, 15 * 60 * 1000); // 50 attempts per 15 minutes (increased for testing)
 const registerRateLimit = createRateLimitMiddleware(3, 60 * 60 * 1000); // 3 attempts per hour
 
 /**

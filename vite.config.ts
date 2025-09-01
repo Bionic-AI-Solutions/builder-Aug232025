@@ -5,15 +5,17 @@ import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      // Most basic React plugin configuration
+    }),
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
+      process.env.REPL_ID !== undefined
       ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
+        await import("@replit/vite-plugin-cartographer").then((m) =>
+          m.cartographer(),
+        ),
+      ]
       : []),
   ],
   resolve: {
@@ -33,5 +35,12 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    // Add explicit server configuration
+    port: 5000,
+    host: '0.0.0.0',
+  },
+  // Add explicit define for React refresh
+  define: {
+    __DEV__: true,
   },
 });

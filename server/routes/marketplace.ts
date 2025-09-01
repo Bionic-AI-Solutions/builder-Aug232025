@@ -14,7 +14,7 @@ import {
   validateQuery,
   logMarketplaceOperation
 } from '../middleware/phase2-auth';
-import { storage } from '../storage';
+import { storage, getProject, updateProject } from '../storage';
 
 const router = Router();
 
@@ -91,7 +91,7 @@ router.post('/projects',
       }
 
       // Validate that the project exists and belongs to the user
-      const project = await storage.getProject(projectId);
+      const project = await getProject(projectId);
       if (!project) {
         return res.status(404).json({
           error: 'Project not found',
@@ -435,7 +435,7 @@ router.get('/projects/:id',
       }
 
       // Get the original project details
-      const project = await storage.getProject(marketplaceProject.projectId);
+      const project = await getProject(marketplaceProject.projectId);
       if (!project) {
         return res.status(404).json({
           error: 'Original project not found',
@@ -1014,7 +1014,7 @@ router.put('/admin/projects/:id/status',
       const { status, approval_status, rejection_reason } = req.body;
 
       // Get the project from the projects table (single table design)
-      const project = await storage.getProject(id);
+      const project = await getProject(id);
       if (!project) {
         return res.status(404).json({
           error: 'Project not found',
@@ -1036,7 +1036,7 @@ router.put('/admin/projects/:id/status',
         }
       }
 
-      const updatedProject = await storage.updateProject(id, updates);
+      const updatedProject = await updateProject(id, updates);
 
       res.json({
         success: true,
@@ -1206,7 +1206,7 @@ router.post('/builder/projects/:id/publish',
       }
 
       // Verify project ownership
-      const project = await storage.getProject(id);
+      const project = await getProject(id);
       if (!project) {
         return res.status(404).json({
           error: 'Project not found',

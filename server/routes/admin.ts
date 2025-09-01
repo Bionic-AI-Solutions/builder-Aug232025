@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { db, client } from '../db';
 import { z } from 'zod';
+import { getApprovedLLMModels } from '../storage';
 
 const router = Router();
 
@@ -50,26 +51,17 @@ router.get('/users', authenticateToken, async (req: Request, res: Response) => {
         const usersResult = await client`
       SELECT 
         u.id,
-        u.name,
         u.email,
-        u.username,
         u.persona,
         u.approval_status,
-        u.plan_type,
-        u.avatar_url,
-        u.last_login_at,
         u.created_at,
         u.updated_at,
         COUNT(DISTINCT p.id) as project_count,
-        COUNT(DISTINCT mp.id) as marketplace_project_count,
-        COUNT(DISTINCT wi.id) as widget_implementation_count,
-        COALESCE(SUM(re.amount), 0) as total_revenue
+        COUNT(DISTINCT mp.id) as marketplace_project_count
       FROM users u
       LEFT JOIN projects p ON p.user_id = u.id
       LEFT JOIN marketplace_projects mp ON mp.builder_id = u.id
-      LEFT JOIN widget_implementations wi ON wi.end_user_id = u.id
-      LEFT JOIN revenue_events re ON re.builder_id = u.id
-      GROUP BY u.id, u.name, u.email, u.username, u.persona, u.approval_status, u.plan_type, u.avatar_url, u.last_login_at, u.created_at, u.updated_at
+      GROUP BY u.id, u.email, u.persona, u.approval_status, u.created_at, u.updated_at
       ORDER BY u.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -121,16 +113,10 @@ router.get('/users/:id', authenticateToken, async (req: Request, res: Response) 
       SELECT 
         u.*,
         COUNT(DISTINCT p.id) as project_count,
-        COUNT(DISTINCT mp.id) as marketplace_project_count,
-        COUNT(DISTINCT wi.id) as widget_implementation_count,
-        COALESCE(SUM(re.amount), 0) as total_revenue,
-        COUNT(DISTINCT ue.id) as usage_event_count
+        COUNT(DISTINCT mp.id) as marketplace_project_count
       FROM users u
       LEFT JOIN projects p ON p.user_id = u.id
       LEFT JOIN marketplace_projects mp ON mp.builder_id = u.id
-      LEFT JOIN widget_implementations wi ON wi.end_user_id = u.id
-      LEFT JOIN revenue_events re ON re.builder_id = u.id
-      LEFT JOIN usage_events ue ON ue.end_user_id = u.id
       WHERE u.id = ${id}
       GROUP BY u.id
     `;
@@ -309,6 +295,186 @@ router.get('/statistics', authenticateToken, async (req: Request, res: Response)
         res.status(500).json({
             error: 'Failed to fetch admin statistics',
             code: 'ADMIN_STATISTICS_ERROR'
+        });
+    }
+});
+
+// ============================================================================
+// LLM MODELS MANAGEMENT
+// ============================================================================
+
+// GET /api/admin/llm-models - Get all LLM models with approval status
+router.get('/llm-models', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        // Check if user is super admin
+        if (req.user!.persona !== 'super_admin') {
+            return res.status(403).json({
+                error: 'Super Admin access required',
+                code: 'SUPER_ADMIN_REQUIRED',
+                userPersona: req.user!.persona
+            });
+        }
+
+        const result = await client`
+            SELECT 
+                id,
+                name,
+                display_name,
+                provider,
+                model,
+                type,
+                status,
+                approved,
+                created_at,
+                updated_at
+            FROM llm_models
+            ORDER BY provider, name
+        `;
+
+        res.json({
+            success: true,
+            data: { models: result }
+        });
+    } catch (error) {
+        console.error('Admin LLM models error:', error);
+        res.status(500).json({
+            error: 'Failed to fetch LLM models',
+            code: 'ADMIN_LLM_MODELS_ERROR'
+        });
+    }
+});
+
+// PUT /api/admin/llm-models/:id/approve - Toggle approval status of LLM model
+router.put('/llm-models/:id/approve', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        // Check if user is super admin
+        if (req.user!.persona !== 'super_admin') {
+            return res.status(403).json({
+                error: 'Super Admin access required',
+                code: 'SUPER_ADMIN_REQUIRED',
+                userPersona: req.user!.persona
+            });
+        }
+
+        const { id } = req.params;
+        const { approved } = req.body;
+
+        if (typeof approved !== 'boolean') {
+            return res.status(400).json({
+                error: 'Approved field must be a boolean',
+                code: 'INVALID_APPROVAL_STATUS'
+            });
+        }
+
+        await client`
+            UPDATE llm_models 
+            SET approved = ${approved}, updated_at = NOW() 
+            WHERE id = ${id}
+        `;
+
+        res.json({
+            success: true,
+            data: {
+                message: `LLM model ${approved ? 'approved' : 'unapproved'} successfully`,
+                modelId: id,
+                approved
+            }
+        });
+    } catch (error) {
+        console.error('Admin LLM model approval error:', error);
+        res.status(500).json({
+            error: 'Failed to update LLM model approval status',
+            code: 'ADMIN_LLM_APPROVAL_ERROR'
+        });
+    }
+});
+
+// ============================================================================
+// MCP SERVERS MANAGEMENT
+// ============================================================================
+
+// GET /api/admin/mcp-servers - Get all MCP servers with approval status
+router.get('/mcp-servers', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        // Check if user is super admin
+        if (req.user!.persona !== 'super_admin') {
+            return res.status(403).json({
+                error: 'Super Admin access required',
+                code: 'SUPER_ADMIN_REQUIRED',
+                userPersona: req.user!.persona
+            });
+        }
+
+        const result = await client`
+            SELECT 
+                id,
+                name,
+                type,
+                url,
+                description,
+                status,
+                approved,
+                latency,
+                created_at,
+                updated_at
+            FROM mcp_servers
+            ORDER BY name
+        `;
+
+        res.json({
+            success: true,
+            data: { servers: result }
+        });
+    } catch (error) {
+        console.error('Admin MCP servers error:', error);
+        res.status(500).json({
+            error: 'Failed to fetch MCP servers',
+            code: 'ADMIN_MCP_SERVERS_ERROR'
+        });
+    }
+});
+
+// PUT /api/admin/mcp-servers/:id/approve - Toggle approval status of MCP server
+router.put('/mcp-servers/:id/approve', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        // Check if user is super admin
+        if (req.user!.persona !== 'super_admin') {
+            return res.status(403).json({
+                error: 'Super Admin access required',
+                code: 'SUPER_ADMIN_REQUIRED',
+                userPersona: req.user!.persona
+            });
+        }
+
+        const { id } = req.params;
+        const { approved } = req.body;
+
+        if (typeof approved !== 'boolean') {
+            return res.status(400).json({
+                error: 'Approved field must be a boolean',
+                code: 'INVALID_APPROVAL_STATUS'
+            });
+        }
+
+        await client`
+            UPDATE mcp_servers 
+            SET approved = ${approved}, updated_at = NOW() 
+            WHERE id = ${id}
+        `;
+
+        res.json({
+            success: true,
+            data: {
+                message: `MCP server ${approved ? 'approved' : 'unapproved'} successfully`,
+                serverId: id,
+                approved
+            }
+        });
+    } catch (error) {
+        console.error('Admin MCP server approval error:', error);
+        res.status(500).json({
+            error: 'Failed to update MCP server approval status',
+            code: 'ADMIN_MCP_APPROVAL_ERROR'
         });
     }
 });

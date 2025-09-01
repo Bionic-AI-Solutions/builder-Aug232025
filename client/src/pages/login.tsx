@@ -111,9 +111,18 @@ export default function LoginPage() {
               </div>
 
               <div className="mt-4 space-y-2 text-xs text-gray-600">
-                <div><strong>Super Admin:</strong> admin@builderai.com / demo123</div>
-                <div><strong>Builder:</strong> builder@builderai.com / demo123</div>
-                <div><strong>End User:</strong> john.doe@example.com / demo123</div>
+                <div className="font-semibold text-gray-700 mb-2">Super Admin:</div>
+                <div className="ml-2">• admin@builderai.com / admin123</div>
+                <div className="ml-2">• admin2@builderai.com / admin123</div>
+
+                <div className="font-semibold text-gray-700 mt-3 mb-2">Builder:</div>
+                <div className="ml-2">• builder1@example.com / builder123</div>
+                <div className="ml-2">• builder2@example.com / builder123</div>
+                <div className="ml-2">• builder@test.com / builder123</div>
+
+                <div className="font-semibold text-gray-700 mt-3 mb-2">End User:</div>
+                <div className="ml-2">• user1@example.com / user123</div>
+                <div className="ml-2">• user2@example.com / user123</div>
               </div>
             </div>
           </CardContent>

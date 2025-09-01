@@ -9,6 +9,8 @@ import marketplaceRoutes from "./routes/marketplace";
 import llmRoutes from "./routes/llms";
 import dashboardRoutes from "./routes/dashboard";
 import adminRoutes from "./routes/admin";
+import credentialsRoutes from "./routes/credentials";
+import oauth2Routes from "./routes/oauth2";
 import { corsMiddleware } from "./middleware/auth";
 import { setupDashboardWebSocket, setWebSocketServer } from "./websocket/dashboard";
 
@@ -33,11 +35,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register LLM routes
   app.use("/api/llms", llmRoutes);
 
+  // MCP Servers endpoint for project selection
+  app.get("/api/servers", async (req, res) => {
+    try {
+      const servers = await storage.getApprovedMcpServers();
+      res.json({
+        success: true,
+        data: { servers }
+      });
+    } catch (error) {
+      console.error('[MCP SERVERS] Error fetching approved servers:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch approved MCP servers'
+      });
+    }
+  });
+
+  // Prompts endpoint for project selection
+  app.get("/api/prompts", async (req, res) => {
+    try {
+      const { getPrompts } = await import('./storage');
+      const prompts = await getPrompts();
+
+      res.json({
+        success: true,
+        data: { prompts }
+      });
+    } catch (error) {
+      console.error('[PROMPTS] Error fetching prompts:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch prompts'
+      });
+    }
+  });
+
   // Register Dashboard routes
   app.use("/api/dashboard", dashboardRoutes);
 
   // Register Admin routes
   app.use("/api/admin", adminRoutes);
+
+  // Register Credentials routes
+  app.use("/api/credentials", credentialsRoutes);
+
+  // Register OAuth2 routes
+  app.use("/api/oauth2", oauth2Routes);
 
   // User routes
   app.get("/api/users/:id", async (req, res) => {
@@ -266,18 +310,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
-  
+
   // Setup WebSocket server for real-time dashboard updates
-  const wss = new WebSocketServer({ 
+  const wss = new WebSocketServer({
     server: httpServer,
     path: '/ws/dashboard'
   });
-  
+
   // Setup dashboard WebSocket handlers
   setupDashboardWebSocket(wss);
   setWebSocketServer(wss);
-  
+
   console.log('WebSocket server initialized on /ws/dashboard');
-  
+
   return httpServer;
 }

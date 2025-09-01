@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { apiCall } from "@/lib/auth";
 import {
   Server,
   Edit2,
@@ -22,131 +23,74 @@ import {
   Code,
   Key,
   Globe,
-  Terminal
+  Terminal,
+  RefreshCw,
+  AlertTriangle
 } from "lucide-react";
 
-interface McpClient {
+interface McpServer {
   id: string;
   name: string;
-  connectionString: string;
-  connectionType: 'sse' | 'stdio' | 'websocket' | 'grpc';
-  command?: string;
-  args?: string[];
-  headers?: Record<string, string>;
-  customVars?: Record<string, string>;
-  isActive: boolean;
-  createdAt: Date;
+  type: string;
+  url: string;
+  description: string;
+  approved: boolean;
+  status: string;
 }
 
-// Mock MCP clients data
-const mockMcpClients: McpClient[] = [
-  {
-    id: "mcp-1",
-    name: "Database Connector",
-    connectionString: "sse://api.database-service.com/events",
-    connectionType: "sse",
-    headers: {
-      "Authorization": "Bearer ${API_KEY}",
-      "Content-Type": "application/json"
-    },
-    customVars: {
-      "API_KEY": "your-database-api-key",
-      "ENVIRONMENT": "production"
-    },
-    isActive: true,
-    createdAt: new Date("2024-12-01"),
-  },
-  {
-    id: "mcp-2",
-    name: "File System Manager",
-    connectionString: "stdio:///usr/local/bin/file-manager",
-    connectionType: "stdio",
-    command: "/usr/local/bin/file-manager",
-    args: ["--config", "/etc/file-manager/config.json"],
-    isActive: true,
-    createdAt: new Date("2024-12-05"),
-  },
-  {
-    id: "mcp-3",
-    name: "Payment Gateway",
-    connectionString: "websocket://wss://payment-gateway.com/ws",
-    connectionType: "websocket",
-    headers: {
-      "X-API-Key": "${PAYMENT_API_KEY}",
-      "X-Client-ID": "${CLIENT_ID}"
-    },
-    customVars: {
-      "PAYMENT_API_KEY": "pk_live_...",
-      "CLIENT_ID": "client_12345"
-    },
-    isActive: false,
-    createdAt: new Date("2024-12-10"),
-  },
-  {
-    id: "mcp-4",
-    name: "Analytics Engine",
-    connectionString: "grpc://analytics-service:9090",
-    connectionType: "grpc",
-    headers: {
-      "Authorization": "Bearer ${ANALYTICS_TOKEN}"
-    },
-    customVars: {
-      "ANALYTICS_TOKEN": "analytics_token_123"
-    },
-    isActive: true,
-    createdAt: new Date("2024-12-15"),
-  },
-];
-
 export default function McpServers() {
-  const [selectedClient, setSelectedClient] = useState<McpClient | null>(null);
+  const [selectedServer, setSelectedServer] = useState<McpServer | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingClient, setEditingClient] = useState<Partial<McpClient>>({});
+  const [editingServer, setEditingServer] = useState<Partial<McpServer>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch MCP clients
-  const { data: mcpClients = mockMcpClients, isLoading } = useQuery<McpClient[]>({
-    queryKey: ["/api/mcp-clients"],
+  // Fetch MCP servers from API
+  const { data: mcpData, isLoading, error } = useQuery<{ success: boolean; data: { servers: McpServer[] } }>({
+    queryKey: ["mcp-servers"],
     queryFn: async () => {
-      // For now, return mock data. In real app, this would be an API call
-      return mockMcpClients;
+      console.log('Fetching MCP servers...');
+      const result = await apiCall('/servers');
+      console.log('MCP servers response:', result);
+      return result;
     },
   });
 
-  // Update MCP client mutation
-  const updateMcpClientMutation = useMutation({
-    mutationFn: async (client: McpClient) => {
+  const mcpServers: McpServer[] = mcpData?.data?.servers || [];
+
+  // Update MCP server mutation
+  const updateMcpServerMutation = useMutation({
+    mutationFn: async (server: McpServer) => {
       // In real app, this would be an API call
-      console.log("Updating MCP client:", client);
-      return client;
+      console.log("Updating MCP server:", server);
+      return server;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/mcp-clients"] });
+      queryClient.invalidateQueries({ queryKey: ["mcp-servers"] });
       toast({
-        title: "MCP Client Updated",
-        description: "The MCP client has been successfully updated.",
+        title: "MCP Server Updated",
+        description: "The MCP server has been successfully updated.",
       });
       setShowEditModal(false);
-      setEditingClient({});
+      setEditingServer({});
     },
     onError: (error) => {
       toast({
         title: "Update Failed",
-        description: "Failed to update MCP client. Please try again.",
+        description: "Failed to update MCP server. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const handleEditClient = (client: McpClient) => {
-    setSelectedClient(client);
-    setEditingClient({ ...client });
+  const handleEditServer = (server: McpServer) => {
+    setSelectedServer(server);
+    setEditingServer({ ...server });
     setShowEditModal(true);
   };
 
-  const handleSaveClient = () => {
-    if (!selectedClient || !editingClient.name || !editingClient.connectionString) {
+  const handleSaveServer = () => {
+    if (!selectedServer || !editingServer.name || !editingServer.url) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -155,26 +99,28 @@ export default function McpServers() {
       return;
     }
 
-    const updatedClient: McpClient = {
-      ...selectedClient,
-      ...editingClient,
+    const updatedServer: McpServer = {
+      ...selectedServer,
+      ...editingServer,
     };
 
-    updateMcpClientMutation.mutate(updatedClient);
+    updateMcpServerMutation.mutate(updatedServer);
   };
 
   const handleClearAll = () => {
-    setEditingClient({});
+    setEditingServer({});
   };
 
   const getConnectionTypeBadge = (type: string) => {
     const badges = {
-      sse: { color: "bg-blue-100 text-blue-800", icon: Globe },
-      stdio: { color: "bg-green-100 text-green-800", icon: Terminal },
+      http: { color: "bg-blue-100 text-blue-800", icon: Globe },
+      tcp: { color: "bg-green-100 text-green-800", icon: Terminal },
       websocket: { color: "bg-purple-100 text-purple-800", icon: Server },
       grpc: { color: "bg-orange-100 text-orange-800", icon: Code },
+      sse: { color: "bg-indigo-100 text-indigo-800", icon: Server },
+      stdio: { color: "bg-teal-100 text-teal-800", icon: Terminal },
     };
-    const config = badges[type as keyof typeof badges] || badges.sse;
+    const config = badges[type as keyof typeof badges] || badges.http;
     const Icon = config.icon;
 
     return (
@@ -185,171 +131,222 @@ export default function McpServers() {
     );
   };
 
-  const getStatusBadge = (isActive: boolean) => {
-    return isActive ? (
-      <Badge className="bg-green-100 text-green-800">
-        <CheckCircle size={12} className="mr-1" />
-        Active
-      </Badge>
-    ) : (
-      <Badge className="bg-gray-100 text-gray-800">
-        <AlertCircle size={12} className="mr-1" />
-        Inactive
-      </Badge>
-    );
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: "Copied",
-        description: "Connection string copied to clipboard",
-      });
-    } catch (err) {
-      console.error('Failed to copy: ', err);
+  const getStatusBadge = (status: string) => {
+    if (status === 'active') {
+      return (
+        <Badge className="bg-green-100 text-green-800">
+          <CheckCircle size={12} className="mr-1" />
+          Active
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge className="bg-gray-100 text-gray-800">
+          <AlertCircle size={12} className="mr-1" />
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </Badge>
+      );
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">MCP Servers</h1>
-          <p className="text-gray-600 mt-2">
-            Manage Model Context Protocol (MCP) clients for external server connections
-          </p>
+  const getApprovalBadge = (approved: boolean) => {
+    if (approved) {
+      return (
+        <Badge className="bg-green-100 text-green-800">
+          <CheckCircle size={12} className="mr-1" />
+          Approved
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800">
+          <AlertCircle size={12} className="mr-1" />
+          Pending
+        </Badge>
+      );
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-500" />
+          <p className="text-gray-500">Loading MCP servers...</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus size={16} className="mr-2" />
-          Add MCP Client
-        </Button>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-4 text-red-500" />
+          <p className="text-red-500 mb-4">Failed to load MCP servers.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">MCP Servers</h1>
+            <p className="text-muted-foreground">
+              Manage Model Context Protocol (MCP) clients for external server connections
+            </p>
+          </div>
+          <Button onClick={() => setShowEditModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Server
+          </Button>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <Server className="h-8 w-8 text-blue-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Total Clients</p>
-                <p className="text-2xl font-bold text-gray-900">{mcpClients.length}</p>
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Servers</CardTitle>
+            <Server className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{mcpServers.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Configured MCP servers
+            </p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {mcpClients.filter(client => client.isActive).length}
-                </p>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Servers</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {mcpServers.filter(s => s.status === 'active').length}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Ready for use
+            </p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <AlertCircle className="h-8 w-8 text-gray-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {mcpClients.filter(client => !client.isActive).length}
-                </p>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Approved Servers</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {mcpServers.filter(s => s.approved).length}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Admin approved
+            </p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <Settings className="h-8 w-8 text-purple-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Types</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {new Set(mcpClients.map(client => client.connectionType)).size}
-                </p>
-              </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Connection Types</CardTitle>
+            <Code className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {new Set(mcpServers.map(s => s.type)).size}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Different protocols
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* MCP Clients Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mcpClients.map((client) => (
-          <Card key={client.id} className="hover:shadow-md transition-shadow border border-gray-100">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg font-semibold text-gray-900">
-                    {client.name}
-                  </CardTitle>
-                  <div className="flex items-center gap-2 mt-2">
-                    {getConnectionTypeBadge(client.connectionType)}
-                    {getStatusBadge(client.isActive)}
+      {/* Servers Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {mcpServers.map((server) => (
+          <Card key={server.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <Server className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">{server.name}</CardTitle>
+                    <CardDescription>{server.description}</CardDescription>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEditClient(client)}
-                  data-testid={`button-edit-mcp-${client.id}`}
-                >
-                  <Edit2 size={14} />
-                </Button>
+                <div className="flex items-center space-x-2">
+                  {getStatusBadge(server.status)}
+                  {getApprovalBadge(server.approved)}
+                </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Connection Type:</span>
+                  {getConnectionTypeBadge(server.type)}
+                </div>
+
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">Connection String</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Input
-                      value={client.connectionString}
-                      readOnly
-                      className="text-sm font-mono bg-gray-50"
-                    />
+                  <span className="text-sm font-medium">Connection String:</span>
+                  <div className="mt-1 p-2 bg-gray-50 rounded text-sm font-mono break-all">
+                    {server.url}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => copyToClipboard(client.connectionString)}
+                      onClick={() => handleEditServer(server)}
                     >
-                      <Copy size={14} />
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(server.url);
+                        toast({
+                          title: "Copied!",
+                          description: "Connection string copied to clipboard.",
+                        });
+                      }}
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy
                     </Button>
                   </div>
-                </div>
-
-                {client.command && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Command</Label>
-                    <p className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
-                      {client.command}
-                    </p>
-                  </div>
-                )}
-
-                {client.args && client.args.length > 0 && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Arguments</Label>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {client.args.map((arg, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {arg}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="text-xs text-gray-500">
-                  Created: {client.createdAt.toLocaleDateString()}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Test connection logic would go here
+                      toast({
+                        title: "Test Connection",
+                        description: `Testing connection to ${server.name}...`,
+                      });
+                    }}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Test
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -357,179 +354,75 @@ export default function McpServers() {
         ))}
       </div>
 
-      {/* Edit MCP Client Modal */}
+      {/* Edit/Add Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              Edit MCP Client: {selectedClient?.name}
+            <DialogTitle>
+              {selectedServer ? "Edit MCP Server" : "Add New MCP Server"}
             </DialogTitle>
             <DialogDescription>
-              Configure the MCP client connection settings and parameters
+              Configure the MCP server connection details.
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="basic">Basic</TabsTrigger>
-              <TabsTrigger value="connection">Connection</TabsTrigger>
-              <TabsTrigger value="advanced">Advanced</TabsTrigger>
-              <TabsTrigger value="variables">Variables</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="basic" className="space-y-4">
-              <div>
-                <Label htmlFor="client-name">MCP Client Name</Label>
-                <Input
-                  id="client-name"
-                  value={editingClient.name || ""}
-                  onChange={(e) => setEditingClient(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter MCP client name"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="connection-type">Connection Type</Label>
-                <select
-                  id="connection-type"
-                  value={editingClient.connectionType || "sse"}
-                  onChange={(e) => setEditingClient(prev => ({
-                    ...prev,
-                    connectionType: e.target.value as 'sse' | 'stdio' | 'websocket' | 'grpc'
-                  }))}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="sse">SSE (Server-Sent Events)</option>
-                  <option value="stdio">STDIO (Standard I/O)</option>
-                  <option value="websocket">WebSocket</option>
-                  <option value="grpc">gRPC</option>
-                </select>
-              </div>
-
-              <div>
-                <Label htmlFor="is-active">Status</Label>
-                <select
-                  id="is-active"
-                  value={editingClient.isActive ? "true" : "false"}
-                  onChange={(e) => setEditingClient(prev => ({
-                    ...prev,
-                    isActive: e.target.value === "true"
-                  }))}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="connection" className="space-y-4">
-              <div>
-                <Label htmlFor="connection-string">Connection String</Label>
-                <Textarea
-                  id="connection-string"
-                  value={editingClient.connectionString || ""}
-                  onChange={(e) => setEditingClient(prev => ({ ...prev, connectionString: e.target.value }))}
-                  placeholder="Enter connection string (e.g., sse://api.example.com/events)"
-                  rows={3}
-                />
-              </div>
-
-              {editingClient.connectionType === "stdio" && (
-                <div>
-                  <Label htmlFor="command">Command</Label>
-                  <Input
-                    id="command"
-                    value={editingClient.command || ""}
-                    onChange={(e) => setEditingClient(prev => ({ ...prev, command: e.target.value }))}
-                    placeholder="Enter command (e.g., /usr/local/bin/mcp-server)"
-                  />
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="advanced" className="space-y-4">
-              {editingClient.connectionType === "stdio" && (
-                <div>
-                  <Label htmlFor="args">Arguments</Label>
-                  <Textarea
-                    id="args"
-                    value={editingClient.args?.join(" ") || ""}
-                    onChange={(e) => setEditingClient(prev => ({
-                      ...prev,
-                      args: e.target.value.split(" ").filter(arg => arg.trim())
-                    }))}
-                    placeholder="Enter arguments separated by spaces"
-                    rows={2}
-                  />
-                </div>
-              )}
-
-              <div>
-                <Label htmlFor="headers">Headers (JSON)</Label>
-                <Textarea
-                  id="headers"
-                  value={JSON.stringify(editingClient.headers || {}, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const headers = JSON.parse(e.target.value);
-                      setEditingClient(prev => ({ ...prev, headers }));
-                    } catch (error) {
-                      // Invalid JSON, keep as is
-                    }
-                  }}
-                  placeholder='{"Authorization": "Bearer token", "Content-Type": "application/json"}'
-                  rows={4}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="variables" className="space-y-4">
-              <div>
-                <Label htmlFor="custom-vars">Custom Variables (JSON)</Label>
-                <Textarea
-                  id="custom-vars"
-                  value={JSON.stringify(editingClient.customVars || {}, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const customVars = JSON.parse(e.target.value);
-                      setEditingClient(prev => ({ ...prev, customVars }));
-                    } catch (error) {
-                      // Invalid JSON, keep as is
-                    }
-                  }}
-                  placeholder='{"API_KEY": "your-api-key", "ENVIRONMENT": "production"}'
-                  rows={6}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  These variables can be referenced in headers and connection strings using $&#123;VARIABLE_NAME&#125;
-                </p>
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          <div className="flex justify-between pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={handleClearAll}
-            >
-              Clear All
-            </Button>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowEditModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSaveClient}
-                disabled={updateMcpClientMutation.isPending}
-              >
-                {updateMcpClientMutation.isPending ? "Saving..." : "Save Changes"}
-              </Button>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name">Server Name</Label>
+              <Input
+                id="name"
+                value={editingServer.name || ""}
+                onChange={(e) => setEditingServer({ ...editingServer, name: e.target.value })}
+                placeholder="Enter server name"
+              />
             </div>
+
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={editingServer.description || ""}
+                onChange={(e) => setEditingServer({ ...editingServer, description: e.target.value })}
+                placeholder="Enter server description"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="type">Connection Type</Label>
+              <select
+                id="type"
+                value={editingServer.type || ""}
+                onChange={(e) => setEditingServer({ ...editingServer, type: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select type</option>
+                <option value="http">HTTP</option>
+                <option value="tcp">TCP</option>
+                <option value="websocket">WebSocket</option>
+                <option value="grpc">gRPC</option>
+                <option value="sse">SSE</option>
+                <option value="stdio">STDIO</option>
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="url">Connection String</Label>
+              <Input
+                id="url"
+                value={editingServer.url || ""}
+                onChange={(e) => setEditingServer({ ...editingServer, url: e.target.value })}
+                placeholder="Enter connection string"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={handleClearAll}>
+              Clear
+            </Button>
+            <Button onClick={handleSaveServer}>
+              {selectedServer ? "Update" : "Create"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

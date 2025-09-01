@@ -50,8 +50,22 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
 }
 
-// API base URL
-const API_BASE = 'http://localhost:8080/api';
+import { getApiUrl } from '../../config/ports.js';
+
+// API base URL - uses centralized configuration
+const API_BASE = getApiUrl();
+
+// Helper function to check if token is expired
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Math.floor(Date.now() / 1000);
+    return payload.exp < currentTime;
+  } catch (error) {
+    console.error('Error parsing token:', error);
+    return true; // Assume expired if we can't parse
+  }
+};
 
 // Helper function to make authenticated API calls
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
@@ -59,6 +73,14 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   console.log('[API_CALL] Endpoint:', endpoint);
   console.log('[API_CALL] Token exists:', !!token);
   console.log('[API_CALL] Token (first 20 chars):', token ? token.substring(0, 20) + '...' : 'none');
+
+  // Check if token is expired
+  if (token && isTokenExpired(token)) {
+    console.log('[API_CALL] Token is expired, clearing and redirecting to login');
+    localStorage.removeItem('auth-token');
+    window.location.href = '/login';
+    throw new Error('Token expired');
+  }
 
   const config: RequestInit = {
     ...options,
@@ -74,6 +96,16 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+
+      // Handle authentication failures
+      if (response.status === 401 || response.status === 403) {
+        console.log('[API_CALL] Authentication failed, clearing token');
+        localStorage.removeItem('auth-token');
+        // Redirect to login or trigger re-authentication
+        window.location.href = '/login';
+        throw new Error('Authentication failed');
+      }
+
       throw new Error(errorData.error || `HTTP ${response.status}`);
     }
 

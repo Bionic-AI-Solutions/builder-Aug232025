@@ -87,3 +87,4 @@ SELECT COUNT(*) as total_widget_implementations FROM widget_implementations;
 SELECT COUNT(*) as total_projects FROM projects;
 
 
+

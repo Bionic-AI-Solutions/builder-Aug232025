@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authenticateToken, requirePermission, requireSuperAdmin, validateRequest, logMarketplaceOperation } from '../middleware/phase2-auth';
-import { getLLMProviders, getLLMProvider, createLLMProvider, updateLLMProvider, deleteLLMProvider, getLLMModels, createLLMModel, updateLLMModel, deleteLLMModel } from '../storage';
+import { getLLMProviders, getLLMProvider, createLLMProvider, updateLLMProvider, deleteLLMProvider, getLLMModels, createLLMModel, updateLLMModel, deleteLLMModel, getApprovedLLMModels } from '../storage';
 import { encrypt, decrypt, maskApiKey } from '../lib/encryption';
 
 const router = Router();
@@ -9,6 +9,42 @@ const router = Router();
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+/**
+ * Get provider base URL based on provider name
+ */
+function getProviderBaseUrl(providerName: string): string {
+    switch (providerName.toLowerCase()) {
+        case 'openai':
+            return 'https://api.openai.com';
+        case 'anthropic':
+            return 'https://api.anthropic.com';
+        case 'microsoft':
+            return 'https://api.openai.com'; // Azure OpenAI uses OpenAI API
+        case 'local':
+            return 'http://localhost:11434';
+        default:
+            return '';
+    }
+}
+
+/**
+ * Get provider description based on provider name
+ */
+function getProviderDescription(providerName: string): string {
+    switch (providerName.toLowerCase()) {
+        case 'openai':
+            return 'OpenAI provides cutting-edge AI models including GPT-4 and GPT-3.5';
+        case 'anthropic':
+            return 'Anthropic offers Claude models with advanced reasoning capabilities';
+        case 'microsoft':
+            return 'Microsoft Azure OpenAI Service for enterprise AI solutions';
+        case 'local':
+            return 'Local AI models running on your infrastructure';
+        default:
+            return 'AI model provider';
+    }
+}
 
 /**
  * Validate API key format and determine if it's a real key
@@ -127,6 +163,111 @@ const UpdateModelSchema = z.object({
 // ============================================================================
 // LLM PROVIDERS API
 // ============================================================================
+
+/**
+ * GET /api/llms/models
+ * Get all approved LLM models for project selection
+ */
+router.get('/models',
+    async (req: Request, res: Response) => {
+        try {
+            console.log('[LLM MODELS] Fetching approved models for project selection');
+
+            const models = await getApprovedLLMModels();
+
+            res.json({
+                success: true,
+                data: {
+                    models: models.map(model => ({
+                        id: model.id,
+                        name: model.name,
+                        displayName: model.displayName || model.name,
+                        provider: model.provider,
+                        model: model.model,
+                        type: model.type,
+                        status: model.status,
+                        approved: model.approved,
+                        contextLength: model.contextLength,
+                        maxTokens: model.maxTokens,
+                        pricing: model.pricing || null,
+                        capabilities: model.capabilities || []
+                    }))
+                }
+            });
+        } catch (error) {
+            console.error('[LLM MODELS ERROR]', error);
+            res.status(500).json({
+                error: 'Failed to fetch approved LLM models',
+                code: 'MODELS_FETCH_FAILED'
+            });
+        }
+    }
+);
+
+/**
+ * GET /api/llms/providers
+ * Get all LLM providers with their models (for admin management)
+ */
+router.get('/providers',
+    async (req: Request, res: Response) => {
+        try {
+            console.log('[LLM PROVIDERS] Fetching all providers with models');
+
+            // Get all models and group them by provider
+            const allModels = await getApprovedLLMModels();
+
+            // Group models by provider
+            const providersMap = new Map();
+
+            allModels.forEach(model => {
+                const providerName = model.provider;
+                if (!providersMap.has(providerName)) {
+                    providersMap.set(providerName, {
+                        id: `provider-${providerName.toLowerCase()}`,
+                        name: providerName,
+                        type: providerName === 'Local' ? 'local' : 'cloud',
+                        status: 'active',
+                        models: [],
+                        baseUrl: getProviderBaseUrl(providerName),
+                        apiKey: null, // API keys are stored separately in credentials
+                        description: getProviderDescription(providerName),
+                        metadata: {},
+                        createdAt: model.createdAt,
+                        updatedAt: model.updatedAt
+                    });
+                }
+
+                providersMap.get(providerName).models.push({
+                    id: model.id,
+                    name: model.name,
+                    provider: model.provider,
+                    type: model.type,
+                    status: model.status === 'active' ? 'available' : 'unavailable',
+                    contextLength: model.contextLength,
+                    maxTokens: model.maxTokens,
+                    pricing: model.pricing,
+                    capabilities: model.capabilities || []
+                });
+            });
+
+            const providers = Array.from(providersMap.values());
+
+            res.json({
+                success: true,
+                data: {
+                    providers: providers,
+                    total: providers.length
+                }
+            });
+        } catch (error) {
+            console.error('[LLM PROVIDERS ERROR]', error);
+            res.status(500).json({
+                error: 'Failed to fetch LLM providers',
+                code: 'PROVIDERS_FETCH_FAILED'
+            });
+        }
+    }
+);
 
 /**
  * GET /api/llms/providers

@@ -12,7 +12,7 @@ services:
       - JWT_SECRET=test-jwt-secret
       - AUTH_SECRET=test-auth-secret
       - REFRESH_TOKEN_SECRET=test-refresh-secret
-      - CORS_ORIGIN=http://localhost:8080
+      - CORS_ORIGIN=http://localhost:8081
     depends_on:
       - postgres
       - redis
@@ -65,7 +65,7 @@ services:
       - JWT_SECRET=test-jwt-secret
       - AUTH_SECRET=test-auth-secret
       - REFRESH_TOKEN_SECRET=test-refresh-secret
-      - CORS_ORIGIN=http://localhost:8080
+      - CORS_ORIGIN=http://localhost:8081
     depends_on:
       - postgres
       - redis

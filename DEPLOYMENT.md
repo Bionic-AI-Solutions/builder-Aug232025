@@ -62,8 +62,31 @@ Once deployed, you can access the application at:
 
 The application comes with demo data. You can log in with:
 
-- **Email**: demo@mcpbuilder.com
-- **Password**: demo123
+### Super Admin Users
+- **Email**: admin@builderai.com
+- **Password**: admin123
+
+- **Email**: admin2@builderai.com  
+- **Password**: admin123
+
+### Builder Users
+- **Email**: builder1@example.com
+- **Password**: builder123
+
+- **Email**: builder2@example.com
+- **Password**: builder123
+
+- **Email**: builder@test.com
+- **Password**: builder123
+
+### End User Accounts
+- **Email**: user1@example.com
+- **Password**: user123
+
+- **Email**: user2@example.com
+- **Password**: user123
+
+**Note**: These credentials provide access to different personas and features within the application.
 
 ## Management Commands
 

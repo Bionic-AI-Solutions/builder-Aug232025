@@ -1,14 +1,30 @@
-import { type InsertUser, type Project, type InsertProject, type McpServer, type InsertMcpServer, type ChatMessage, type InsertChatMessage, type MarketplaceApp, type InsertMarketplaceApp, type SocialAccount, type InsertSocialAccount } from "@shared/schema";
 import { type User as AuthUser, type Persona, type UserRole, type Permission } from "./lib/auth";
 import { randomUUID } from "crypto";
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import {
-  llmProviders,
   llmModels,
-  type LLMProvider,
-  type NewLLMProvider,
+  llmProviders,
   type LLMModel,
   type NewLLMModel,
+  type LLMProvider,
+  type NewLLMProvider,
+  type Prompt,
+  type ProjectPrompt,
+  type Project,
+  type InsertProject,
+  mcpServers,
+  type McpServer,
+  type InsertMcpServer,
+  type ChatMessage,
+  type InsertChatMessage,
+  type MarketplaceApp,
+  type InsertMarketplaceApp,
+  type WidgetImplementation,
+  type InsertWidgetImplementation,
+  type User,
+  type InsertUser,
+  type SocialAccount,
+  type InsertSocialAccount,
 } from "../shared/schema";
 import { db } from "./db";
 import { client } from "./db";
@@ -887,7 +903,53 @@ export class MemStorage implements IStorage {
 
   // Users
   async getUser(id: string): Promise<StorageUser | undefined> {
-    return this.users.get(id);
+    try {
+      const result = await client`
+        SELECT 
+          id,
+          email,
+          password_hash,
+          persona,
+          roles,
+          permissions,
+          metadata,
+          is_active,
+          approval_status,
+          last_login_at,
+          created_at,
+          updated_at
+        FROM users
+        WHERE id = ${id}
+      `;
+
+      if (result.length > 0) {
+        const dbUser = result[0];
+        return {
+          id: dbUser.id,
+          email: dbUser.email,
+          password_hash: dbUser.password_hash,
+          persona: dbUser.persona as Persona,
+          roles: dbUser.roles || [],
+          permissions: dbUser.permissions || [],
+          metadata: dbUser.metadata || {},
+          isActive: dbUser.is_active,
+          approvalStatus: dbUser.approval_status,
+          name: undefined,
+          username: undefined,
+          avatarUrl: undefined,
+          lastLoginAt: dbUser.last_login_at,
+          planType: undefined,
+          createdAt: dbUser.created_at,
+          updatedAt: dbUser.updated_at
+        };
+      }
+
+      // Fallback to in-memory storage
+      return this.users.get(id);
+    } catch (error) {
+      console.error('Error getting user by id from database:', error);
+      return this.users.get(id);
+    }
   }
 
   async getUserByEmail(email: string): Promise<StorageUser | undefined> {
@@ -904,11 +966,7 @@ export class MemStorage implements IStorage {
           metadata,
           is_active,
           approval_status,
-          name,
-          username,
-          avatar_url,
           last_login_at,
-          plan_type,
           created_at,
           updated_at
         FROM users 
@@ -927,11 +985,11 @@ export class MemStorage implements IStorage {
           metadata: dbUser.metadata || {},
           isActive: dbUser.is_active,
           approvalStatus: dbUser.approval_status,
-          name: dbUser.name,
-          username: dbUser.username,
-          avatarUrl: dbUser.avatar_url,
+          name: undefined,
+          username: undefined,
+          avatarUrl: undefined,
           lastLoginAt: dbUser.last_login_at,
-          planType: dbUser.plan_type,
+          planType: undefined,
           createdAt: dbUser.created_at,
           updatedAt: dbUser.updated_at
         };
@@ -1234,62 +1292,128 @@ export class MemStorage implements IStorage {
 
   // Marketplace Projects
   async getMarketplaceProjects(options?: MarketplaceQueryOptions): Promise<MarketplaceQueryResult> {
-    let projects = Array.from(this.marketplaceProjects.values());
+    try {
+      const rows = await client`
+        SELECT 
+          p.id,
+          p.user_id,
+          p.name,
+          p.description,
+          p.category,
+          p.tags,
+          p.marketplace_price,
+          p.marketplace_description,
+          p.marketplace_status,
+          p.marketplace_approval_status,
+          p.marketplace_featured,
+          p.marketplace_rating,
+          p.marketplace_review_count,
+          p.marketplace_download_count,
+          p.marketplace_mcp_servers,
+          p.marketplace_popularity_score,
+          p.marketplace_published_at,
+          p.created_at
+        FROM projects p
+      `;
 
-    if (options?.filters) {
-      if (options.filters.status) {
-        projects = projects.filter(p => p.status === options.filters.status);
-      }
-      if (options.filters.category) {
-        projects = projects.filter(p => p.category === options.filters.category);
-      }
-      if (options.filters.featured !== undefined) {
-        projects = projects.filter(p => p.featured === options.filters.featured);
-      }
-      if (options.filters.minPrice !== undefined) {
-        projects = projects.filter(p => p.price >= options.filters.minPrice);
-      }
-      if (options.filters.maxPrice !== undefined) {
-        projects = projects.filter(p => p.price <= options.filters.maxPrice);
-      }
-      if (options.filters.minRating !== undefined) {
-        projects = projects.filter(p => p.rating >= options.filters.minRating);
-      }
-      if (options.filters.tags && options.filters.tags.length > 0) {
-        projects = projects.filter(p => p.tags.some(tag => options.filters.tags.includes(tag)));
-      }
-    }
+      let projects: MarketplaceProject[] = rows.map((r: any) => ({
+        id: r.id,
+        projectId: r.id,
+        builderId: r.user_id,
+        title: r.name,
+        description: r.marketplace_description ?? r.description ?? '',
+        price: r.marketplace_price ?? 0,
+        category: r.category ?? 'general',
+        tags: Array.isArray(r.tags) ? r.tags : [],
+        status: r.marketplace_status ?? 'inactive',
+        featured: !!r.marketplace_featured,
+        rating: r.marketplace_rating ?? 0,
+        reviewCount: r.marketplace_review_count ?? 0,
+        downloadCount: r.marketplace_download_count ?? 0,
+        revenue: 0,
+        publishedAt: r.marketplace_published_at ?? r.created_at ?? new Date(),
+        updatedAt: r.created_at ?? new Date(),
+        metadata: {},
+        builderName: undefined,
+        // Non-standard fields used by routes mapping
+        approval_status: r.marketplace_approval_status ?? 'pending',
+        mcpServers: r.marketplace_mcp_servers ?? [],
+        popularity_score: r.marketplace_popularity_score ?? 0,
+      } as any));
 
-    if (options?.sortBy) {
+      // Apply filters in-memory
+      const f = options?.filters || {} as any;
+      if (f.status) projects = projects.filter(p => p.status === f.status);
+      if (f.approval_status) projects = projects.filter(p => (p as any).approval_status === f.approval_status);
+      if (f.category) projects = projects.filter(p => p.category === f.category);
+      if (f.featured !== undefined) projects = projects.filter(p => p.featured === f.featured);
+      if (f.minPrice !== undefined) projects = projects.filter(p => p.price >= f.minPrice);
+      if (f.maxPrice !== undefined) projects = projects.filter(p => p.price <= f.maxPrice);
+      if (f.minRating !== undefined) projects = projects.filter(p => p.rating >= f.minRating);
+      if (f.tags && f.tags.length > 0) projects = projects.filter(p => p.tags?.some((t: string) => f.tags.includes(t)));
+
+      // Sort
+      const sortBy = options?.sortBy || 'date';
+      const sortOrder = options?.sortOrder || 'desc';
       projects.sort((a, b) => {
-        if (options.sortOrder === 'asc') {
-          if (options.sortBy === 'price') return a.price - b.price;
-          if (options.sortBy === 'rating') return a.rating - b.rating;
-          if (options.sortBy === 'downloads') return a.downloadCount - b.downloadCount;
-          if (options.sortBy === 'date') return a.publishedAt.getTime() - b.publishedAt.getTime();
-        } else {
-          if (options.sortBy === 'price') return b.price - a.price;
-          if (options.sortBy === 'rating') return b.rating - a.rating;
-          if (options.sortBy === 'downloads') return b.downloadCount - a.downloadCount;
-          if (options.sortBy === 'date') return b.publishedAt.getTime() - a.publishedAt.getTime();
-        }
+        const mul = sortOrder === 'asc' ? 1 : -1;
+        if (sortBy === 'price') return mul * ((a.price || 0) - (b.price || 0));
+        if (sortBy === 'rating') return mul * ((a.rating || 0) - (b.rating || 0));
+        if (sortBy === 'downloads') return mul * ((a.downloadCount || 0) - (b.downloadCount || 0));
+        if (sortBy === 'date') return mul * (((a.publishedAt as Date)?.getTime?.() || new Date(a.publishedAt as any).getTime()) - ((b.publishedAt as Date)?.getTime?.() || new Date(b.publishedAt as any).getTime()));
         return 0;
       });
+
+      // Pagination top-level fields expected by routes
+      const page = options?.page || 1;
+      const limit = options?.limit || 20;
+      const total = projects.length;
+      const start = (page - 1) * limit;
+      const end = start + limit;
+      const paginated = projects.slice(start, end);
+
+      return {
+        projects: paginated,
+        page,
+        limit,
+        total,
+      } as any;
+    } catch (error) {
+      console.error('Error fetching marketplace projects from database:', error);
+      // Fallback to existing in-memory behavior
+      let projects = Array.from(this.marketplaceProjects.values());
+
+      const page = options?.page || 1;
+      const limit = options?.limit || 20;
+      const total = projects.length;
+      const start = (page - 1) * limit;
+      const end = start + limit;
+      const paginated = projects.slice(start, end);
+      return { projects: paginated, page, limit, total } as any;
     }
+  }
 
-    const start = (options?.page || 1) * (options?.limit || 10) - (options?.limit || 10);
-    const end = start + (options?.limit || 10);
-    const paginatedProjects = projects.slice(start, end);
+  async getApprovedMcpServers(): Promise<any[]> {
+    try {
+      const rows = await db
+        .select()
+        .from(mcpServers)
+        .where(and(eq(mcpServers.approved, true), eq(mcpServers.status, 'active')))
+        .orderBy(desc(mcpServers.createdAt));
 
-    return {
-      projects: paginatedProjects,
-      pagination: {
-        page: options?.page || 1,
-        limit: options?.limit || 10,
-        total: projects.length,
-        totalPages: Math.ceil(projects.length / (options?.limit || 10)),
-      },
-    };
+      return rows.map((server: any) => ({
+        id: server.id,
+        name: server.name,
+        type: server.type,
+        url: server.url,
+        description: server.description,
+        approved: server.approved,
+        status: server.status,
+      }));
+    } catch (error) {
+      console.error('Error fetching approved MCP servers:', error);
+      return [];
+    }
   }
 
   async getMarketplaceProject(id: string): Promise<MarketplaceProject | undefined> {
@@ -1584,4 +1708,236 @@ export async function deleteLLMModel(id: string): Promise<boolean> {
   }
 }
 
+/**
+ * Get all approved LLM models for project selection
+ */
+export async function getApprovedLLMModels(): Promise<LLMModel[]> {
+  try {
+    const result = await db
+      .select()
+      .from(llmModels)
+      .where(eq(llmModels.approved, true))
+      .orderBy(llmModels.provider, llmModels.name);
+    return result;
+  } catch (error) {
+    console.error('[STORAGE] Error fetching approved LLM models:', error);
+    throw new Error('Failed to fetch approved LLM models');
+  }
+}
+
+/**
+ * Get all prompts for project selection
+ */
+export async function getPrompts(): Promise<Prompt[]> {
+  try {
+    const { prompts } = await import('../shared/schema');
+
+    const result = await db
+      .select()
+      .from(prompts)
+      .where(eq(prompts.isPublic, true))
+      .orderBy(prompts.category, prompts.name);
+
+    return result.map(prompt => ({
+      id: prompt.id,
+      name: prompt.name,
+      title: prompt.title,
+      content: prompt.content,
+      description: prompt.description,
+      variables: prompt.variables || {},
+      category: prompt.category,
+      tags: prompt.tags || [],
+      isPublic: prompt.isPublic,
+      createdBy: prompt.createdBy,
+      createdAt: prompt.createdAt,
+      updatedAt: prompt.updatedAt
+    }));
+  } catch (error) {
+    console.error('[STORAGE] Error fetching prompts:', error);
+    throw new Error('Failed to fetch prompts');
+  }
+}
+
+/**
+ * Get prompts for a specific project
+ */
+export async function getProjectPrompts(projectId: string): Promise<ProjectPrompt[]> {
+  try {
+    const { projectPrompts } = await import('../shared/schema');
+
+    const result = await db
+      .select()
+      .from(projectPrompts)
+      .where(eq(projectPrompts.projectId, projectId))
+      .orderBy(desc(projectPrompts.isPrimary), projectPrompts.createdAt);
+
+    return result.map(pp => ({
+      id: pp.id,
+      projectId: pp.projectId,
+      promptId: pp.promptId,
+      isPrimary: pp.isPrimary,
+      customContent: pp.customContent,
+      customVariables: pp.customVariables || {},
+      createdAt: pp.createdAt,
+      updatedAt: pp.updatedAt
+    }));
+  } catch (error) {
+    console.error('[STORAGE] Error fetching project prompts:', error);
+    throw new Error('Failed to fetch project prompts');
+  }
+}
+
+/**
+ * Get primary prompt for a project
+ */
+export async function getPrimaryProjectPrompt(projectId: string): Promise<ProjectPrompt | null> {
+  try {
+    const { projectPrompts } = await import('../shared/schema');
+
+    const result = await db
+      .select()
+      .from(projectPrompts)
+      .where(and(
+        eq(projectPrompts.projectId, projectId),
+        eq(projectPrompts.isPrimary, true)
+      ))
+      .limit(1);
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    const pp = result[0];
+    return {
+      id: pp.id,
+      projectId: pp.projectId,
+      promptId: pp.promptId,
+      isPrimary: pp.isPrimary,
+      customContent: pp.customContent,
+      customVariables: pp.customVariables || {},
+      createdAt: pp.createdAt,
+      updatedAt: pp.updatedAt
+    };
+  } catch (error) {
+    console.error('[STORAGE] Error fetching primary project prompt:', error);
+    throw new Error('Failed to fetch primary project prompt');
+  }
+}
+
+/**
+ * Get a single project by ID from database
+ */
+export async function getProject(id: string): Promise<Project | null> {
+  try {
+    const { projects } = await import('../shared/schema');
+
+    const result = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, id))
+      .limit(1);
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    const project = result[0];
+    return {
+      id: project.id,
+      userId: project.userId,
+      name: project.name,
+      description: project.description,
+      status: project.status,
+      category: project.category,
+      tags: project.tags || [],
+      llmModelId: project.llmModelId,
+      promptId: project.promptId,
+      knowledgeBaseId: project.knowledgeBaseId,
+      llm: project.llm,
+      files: project.files || [],
+      published: project.published,
+      marketplacePrice: project.marketplacePrice,
+      marketplaceDescription: project.marketplaceDescription,
+      marketplaceStatus: project.marketplaceStatus,
+      marketplaceApprovalStatus: project.marketplaceApprovalStatus,
+      marketplacePublishedAt: project.marketplacePublishedAt,
+      marketplaceFeatured: project.marketplaceFeatured,
+      marketplaceRating: project.marketplaceRating,
+      marketplaceReviewCount: project.marketplaceReviewCount,
+      marketplaceDownloadCount: project.marketplaceDownloadCount,
+      marketplaceLikeCount: project.marketplaceLikeCount,
+      marketplaceRevenue: project.marketplaceRevenue,
+      marketplaceApprovedBy: project.marketplaceApprovedBy,
+      marketplaceApprovedAt: project.marketplaceApprovedAt,
+      marketplaceRejectionReason: project.marketplaceRejectionReason,
+      revenue: project.revenue,
+      revenueGrowth: project.revenueGrowth,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt
+    };
+  } catch (error) {
+    console.error('[STORAGE] Error fetching project:', error);
+    throw new Error('Failed to fetch project');
+  }
+}
+
+/**
+ * Update a project in database
+ */
+export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
+  try {
+    const { projects } = await import('../shared/schema');
+
+    const result = await db
+      .update(projects)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(projects.id, id))
+      .returning();
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    const project = result[0];
+    return {
+      id: project.id,
+      userId: project.userId,
+      name: project.name,
+      description: project.description,
+      status: project.status,
+      category: project.category,
+      tags: project.tags || [],
+      llmModelId: project.llmModelId,
+      promptId: project.promptId,
+      knowledgeBaseId: project.knowledgeBaseId,
+      llm: project.llm,
+      files: project.files || [],
+      published: project.published,
+      marketplacePrice: project.marketplacePrice,
+      marketplaceDescription: project.marketplaceDescription,
+      marketplaceStatus: project.marketplaceStatus,
+      marketplaceApprovalStatus: project.marketplaceApprovalStatus,
+      marketplacePublishedAt: project.marketplacePublishedAt,
+      marketplaceFeatured: project.marketplaceFeatured,
+      marketplaceRating: project.marketplaceRating,
+      marketplaceReviewCount: project.marketplaceReviewCount,
+      marketplaceDownloadCount: project.marketplaceDownloadCount,
+      marketplaceLikeCount: project.marketplaceLikeCount,
+      marketplaceRevenue: project.marketplaceRevenue,
+      marketplaceApprovedBy: project.marketplaceApprovedBy,
+      marketplaceApprovedAt: project.marketplaceApprovedAt,
+      marketplaceRejectionReason: project.marketplaceRejectionReason,
+      revenue: project.revenue,
+      revenueGrowth: project.revenueGrowth,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt
+    };
+  } catch (error) {
+    console.error('[STORAGE] Error updating project:', error);
+    throw new Error('Failed to update project');
+  }
+}
+
 export const storage = new MemStorage();
+// Also export getApprovedMcpServers function reference for routes.ts usage
+export const getApprovedMcpServers = MemStorage.prototype.getApprovedMcpServers.bind(storage);

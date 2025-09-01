@@ -15,7 +15,8 @@ import {
   Package,
   Users,
   Crown,
-  Brain
+  Brain,
+  Key
 } from "lucide-react";
 
 // Persona-specific navigation
@@ -30,6 +31,7 @@ const getNavigation = (persona: string) => {
   const builderNavigation = [
     { name: "Chat Development", href: "/chat", icon: MessageCircle, personas: ['builder'] },
     { name: "Projects", href: "/projects", icon: Folder, personas: ['builder'] },
+    { name: "Credentials", href: "/credentials", icon: Key, personas: ['builder'] },
   ];
 
   const endUserNavigation = [
@@ -41,6 +43,7 @@ const getNavigation = (persona: string) => {
     { name: "Admin", href: "/admin", icon: Settings, personas: ['super_admin'] },
     { name: "MCP Servers", href: "/mcp-servers", icon: Server, personas: ['super_admin'] },
     { name: "LLMs", href: "/llms", icon: Brain, personas: ['super_admin'] },
+    { name: "Credentials", href: "/credentials", icon: Key, personas: ['super_admin'] },
   ];
 
   const allNavigation = [
